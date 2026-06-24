@@ -62,6 +62,13 @@ try {
 } catch (Exception $e) {
     // Silencioso
 }
+
+$season_displayName = $liga['nombre'];
+if ($standings && isset($standings['season']['displayName'])) {
+    $season_displayName = $standings['season']['displayName'];
+} elseif ($standings && isset($standings['name'])) {
+    $season_displayName = $standings['name'];
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -94,6 +101,7 @@ try {
                 <a href="liga.php?id=ita.1" class="nav-btn <?php echo $liga_id === 'ita.1' ? 'active' : ''; ?>" style="text-decoration:none;">Serie A</a>
                 <a href="liga.php?id=ger.1" class="nav-btn <?php echo $liga_id === 'ger.1' ? 'active' : ''; ?>" style="text-decoration:none;">Bundesliga</a>
                 <a href="liga.php?id=fra.1" class="nav-btn <?php echo $liga_id === 'fra.1' ? 'active' : ''; ?>" style="text-decoration:none;">Ligue 1</a>
+                <a href="liga.php?id=fifa.world" class="nav-btn <?php echo $liga_id === 'fifa.world' ? 'active' : ''; ?>" style="text-decoration:none;">Mundial</a>
                 <a href="fichajes.php" class="nav-btn" style="text-decoration:none;">Fichajes</a>
             </nav>
         </div>
@@ -108,8 +116,8 @@ try {
         <div style="display:flex; align-items:center; gap:20px; margin-bottom:30px;">
             <img src="<?php echo htmlspecialchars($liga['logo_url']); ?>" style="height:80px; object-fit:contain;" alt="">
             <div>
-                <h1 style="margin:0; font-size:2rem; font-weight:800; color:#ffffff;"><?php echo htmlspecialchars($liga['nombre']); ?></h1>
-                <span style="font-size:1rem; color:var(--text-secondary);"><?php echo htmlspecialchars($liga['pais']); ?> | Temporada Activa</span>
+                <h1 style="margin:0; font-size:2rem; font-weight:800; color:#ffffff;"><?php echo htmlspecialchars($season_displayName); ?></h1>
+                <span style="font-size:1rem; color:var(--text-secondary);"><?php echo htmlspecialchars($liga['pais']); ?> | Datos Oficiales ESPN</span>
             </div>
         </div>
 
@@ -121,7 +129,7 @@ try {
                 <!-- Tabla de Posiciones Cached -->
                 <h2 style="font-size: 1.4rem; font-weight: 800; margin-bottom: 20px; border-left: 4px solid var(--primary-color); padding-left: 10px;">TABLA DE CLASIFICACIÓN</h2>
                 <div class="standings-table-wrapper" style="margin-bottom: 40px;">
-                    <?php if (!$standings || !isset($standings['children'][0]['standings']['entries'])): ?>
+                    <?php if (!$standings || !isset($standings['children'])): ?>
                         <div style="color:var(--text-secondary); text-align:center; padding:20px;">No hay datos de clasificación sincronizados actualmente. Por favor sincroniza desde el panel administrativo.</div>
                     <?php else: ?>
                         <table class="standings-table">
@@ -141,41 +149,60 @@ try {
                             </thead>
                             <tbody>
                                 <?php 
-                                $entries = $standings['children'][0]['standings']['entries'];
-                                foreach ($entries as $entry): 
-                                    $teamName = $entry['team']['displayName'] ?? 'N/A';
-                                    $teamLogo = $entry['team']['logos'][0]['href'] ?? 'data:image/svg+xml;base64,...';
-                                    $rank = 0; $gp = 0; $w = 0; $d = 0; $l = 0; $f = 0; $a = 0; $gd = 0; $pts = 0;
-                                    
-                                    foreach ($entry['stats'] as $st) {
-                                        if ($st['name'] === 'rank') $rank = $st['value'];
-                                        if ($st['name'] === 'gamesPlayed') $gp = $st['value'];
-                                        if ($st['name'] === 'wins') $w = $st['value'];
-                                        if ($st['name'] === 'ties') $d = $st['value'];
-                                        if ($st['name'] === 'losses') $l = $st['value'];
-                                        if ($st['name'] === 'pointsFor') $f = $st['value'];
-                                        if ($st['name'] === 'pointsAgainst') $a = $st['value'];
-                                        if ($st['name'] === 'pointDifferential') $gd = $st['displayValue'];
-                                        if ($st['name'] === 'points') $pts = $st['value'];
-                                    }
+                                $children = $standings['children'] ?? [];
+                                $is_groups_tournament = count($children) > 1;
+                                
+                                foreach ($children as $child):
+                                    $group_title = $child['name'] ?? '';
+                                    $entries = $child['standings']['entries'] ?? [];
+                                    if (empty($entries)) continue;
                                 ?>
-                                    <tr>
-                                        <td class="standings-rank"><?php echo $rank; ?></td>
-                                        <td>
-                                            <div class="standings-team-cell">
-                                                <img src="<?php echo htmlspecialchars($teamLogo); ?>" class="standings-team-logo" alt="">
-                                                <span><?php echo htmlspecialchars($teamName); ?></span>
-                                            </div>
-                                        </td>
-                                        <td style="text-align:center;"><?php echo $gp; ?></td>
-                                        <td style="text-align:center;"><?php echo $w; ?></td>
-                                        <td style="text-align:center;"><?php echo $d; ?></td>
-                                        <td style="text-align:center;"><?php echo $l; ?></td>
-                                        <td style="text-align:center;"><?php echo $f; ?></td>
-                                        <td style="text-align:center;"><?php echo $a; ?></td>
-                                        <td style="text-align:center; color:<?php echo floatval($gd) >= 0 ? 'var(--accent-live)' : 'var(--accent-red)'; ?>;"><?php echo $gd; ?></td>
-                                        <td style="text-align:center; font-weight:800; color:var(--primary-color);"><?php echo $pts; ?></td>
-                                    </tr>
+                                    <?php if ($is_groups_tournament): ?>
+                                        <tr class="group-header-row" style="background:rgba(255,215,0,0.04);">
+                                            <td colspan="10" style="font-weight:800; color:var(--primary-color); padding: 12px 10px; font-size:1rem; border-bottom: 1px solid var(--border-glass);">
+                                                <?php echo htmlspecialchars($group_title); ?>
+                                            </td>
+                                        </tr>
+                                    <?php endif; ?>
+                                    
+                                    <?php 
+                                    foreach ($entries as $entry): 
+                                        $teamName = $entry['team']['displayName'] ?? 'N/A';
+                                        $teamLogo = $entry['team']['logos'][0]['href'] ?? '';
+                                        $rank = 0; $gp = 0; $w = 0; $d = 0; $l = 0; $f = 0; $a = 0; $gd = 0; $pts = 0;
+                                        
+                                        foreach ($entry['stats'] as $st) {
+                                            if ($st['name'] === 'rank') $rank = $st['value'];
+                                            if ($st['name'] === 'gamesPlayed') $gp = $st['value'];
+                                            if ($st['name'] === 'wins') $w = $st['value'];
+                                            if ($st['name'] === 'ties') $d = $st['value'];
+                                            if ($st['name'] === 'losses') $l = $st['value'];
+                                            if ($st['name'] === 'pointsFor') $f = $st['value'];
+                                            if ($st['name'] === 'pointsAgainst') $a = $st['value'];
+                                            if ($st['name'] === 'pointDifferential') $gd = $st['displayValue'];
+                                            if ($st['name'] === 'points') $pts = $st['value'];
+                                        }
+                                    ?>
+                                        <tr>
+                                            <td class="standings-rank"><?php echo $rank; ?></td>
+                                            <td>
+                                                <div class="standings-team-cell">
+                                                    <?php if (!empty($teamLogo)): ?>
+                                                        <img src="<?php echo htmlspecialchars($teamLogo); ?>" class="standings-team-logo" alt="">
+                                                    <?php endif; ?>
+                                                    <span><?php echo htmlspecialchars($teamName); ?></span>
+                                                </div>
+                                            </td>
+                                            <td style="text-align:center;"><?php echo $gp; ?></td>
+                                            <td style="text-align:center;"><?php echo $w; ?></td>
+                                            <td style="text-align:center;"><?php echo $d; ?></td>
+                                            <td style="text-align:center;"><?php echo $l; ?></td>
+                                            <td style="text-align:center;"><?php echo $f; ?></td>
+                                            <td style="text-align:center;"><?php echo $a; ?></td>
+                                            <td style="text-align:center; color:<?php echo floatval($gd) >= 0 ? 'var(--accent-live)' : 'var(--accent-red)'; ?>;"><?php echo $gd; ?></td>
+                                            <td style="text-align:center; font-weight:800; color:var(--primary-color);"><?php echo $pts; ?></td>
+                                        </tr>
+                                    <?php endforeach; ?>
                                 <?php endforeach; ?>
                             </tbody>
                         </table>

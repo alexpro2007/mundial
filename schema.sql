@@ -110,7 +110,8 @@ INSERT INTO ligas (id, nombre, pais, logo_url) VALUES
 ('esp.1', 'LaLiga', 'España', 'https://a.espncdn.com/i/leaguelogos/soccer/500/15.png'),
 ('ita.1', 'Serie A', 'Italia', 'https://a.espncdn.com/i/leaguelogos/soccer/500/12.png'),
 ('ger.1', 'Bundesliga', 'Alemania', 'https://a.espncdn.com/i/leaguelogos/soccer/500/10.png'),
-('fra.1', 'Ligue 1', 'Francia', 'https://a.espncdn.com/i/leaguelogos/soccer/500/9.png');
+('fra.1', 'Ligue 1', 'Francia', 'https://a.espncdn.com/i/leaguelogos/soccer/500/9.png'),
+('fifa.world', 'Copa del Mundo', 'Mundial', 'https://a.espncdn.com/i/leaguelogos/soccer/500/4.png');
 
 -- Insertar configuraciones iniciales
 INSERT INTO configuracion (clave, valor) VALUES 

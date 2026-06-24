@@ -81,6 +81,7 @@ if (!$articulo) {
                 <a href="liga.php?id=ita.1" class="nav-btn" style="text-decoration:none;">Serie A</a>
                 <a href="liga.php?id=ger.1" class="nav-btn" style="text-decoration:none;">Bundesliga</a>
                 <a href="liga.php?id=fra.1" class="nav-btn" style="text-decoration:none;">Ligue 1</a>
+                <a href="liga.php?id=fifa.world" class="nav-btn" style="text-decoration:none;">Mundial</a>
                 <a href="fichajes.php" class="nav-btn" style="text-decoration:none;">Fichajes</a>
             </nav>
         </div>

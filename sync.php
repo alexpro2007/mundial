@@ -52,7 +52,8 @@ $ligas = [
     'esp.1' => 'LaLiga',
     'ita.1' => 'Serie A',
     'ger.1' => 'Bundesliga',
-    'fra.1' => 'Ligue 1'
+    'fra.1' => 'Ligue 1',
+    'fifa.world' => 'Copa del Mundo'
 ];
 
 $partidos_actualizados = 0;
