@@ -22,8 +22,8 @@ try {
     } else {
         // Seleccionar base de datos
         $pdo->query("USE `$dbname`");
-        // Verificar si la tabla 'equipos' existe para saber si está vacía
-        $table_exists = $pdo->query("SHOW TABLES LIKE 'equipos'")->fetch();
+        // Verificar si la tabla 'ligas' existe para saber si está actualizada
+        $table_exists = $pdo->query("SHOW TABLES LIKE 'ligas'")->fetch();
         if (!$table_exists) {
             $run_schema = true;
         }
