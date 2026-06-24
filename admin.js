@@ -1,104 +1,213 @@
-// admin.js - Lógica de la Consola de Sincronización y Mantenimiento (Mundial 2026)
-
-let activePhase = 'grupos';
-let allMatches = [];
+// admin.js - Lógica de Control del Panel de Administración de las 5 Grandes Ligas
 
 document.addEventListener('DOMContentLoaded', () => {
-    loadMatches();
-    initControls();
-    updateLastSyncTimeDisplay();
-    
-    // Auto-recargar la lista de partidos en la consola cada 10 segundos
-    setInterval(loadMatches, 10000);
+    initTabs();
+    initSync();
+    initNews();
+    initMonetization();
 });
 
-function initControls() {
-    // Selector de fases
-    document.getElementById('filter-phase').addEventListener('change', (e) => {
-        activePhase = e.target.value;
-        renderMatchesList();
-    });
-
-    // Botón forzar sincronización
-    document.getElementById('btn-force-sync').addEventListener('click', forceSyncData);
-
-    // Botón restablecer y re-sincronizar
-    document.getElementById('btn-reset-clean').addEventListener('click', resetAndReSync);
+// CSRF Helper
+function getCsrfToken() {
+    return document.getElementById('csrf_token').value;
 }
 
-function updateLastSyncTimeDisplay() {
-    // Leer el archivo last_sync.txt (a través de una llamada o simplemente usando la fecha y hora de la última carga)
-    // Para simplificar, le preguntamos a la API o mostramos la hora actual cuando sincronizamos con éxito.
-    const display = document.getElementById('last-sync-time-display');
-    
-    // Podemos obtener la hora actual si no hay datos
-    fetch('api.php?action=get_countdown')
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'success') {
-                // Simplemente mostramos que el servidor está conectado
-                display.innerText = "Conectado (API Activa)";
+// ------------------------------------------------------------
+// 1. Control de Pestañas
+// ------------------------------------------------------------
+function initTabs() {
+    const navButtons = document.querySelectorAll('.admin-nav-btn');
+    const sections = document.querySelectorAll('.panel-section');
+
+    navButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const target = btn.getAttribute('data-target');
+            
+            navButtons.forEach(b => b.classList.remove('active'));
+            sections.forEach(s => s.classList.remove('active'));
+
+            btn.classList.add('active');
+            document.getElementById(target).classList.add('active');
+
+            // Cargar datos según pestaña
+            if (target === 'sec-news') {
+                loadArticles();
+            } else if (target === 'sec-monetization') {
+                loadConfig();
             }
-        })
-        .catch(() => {
-            display.innerText = "Desconectado";
         });
+    });
 }
 
 // ------------------------------------------------------------
-// Operaciones de Sincronización
+// 2. Control de Sincronización
 // ------------------------------------------------------------
-function loadMatches() {
-    fetch('api.php?action=get_matches')
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'success') {
-                allMatches = [
-                    ...data.pendientes,
-                    ...data.en_vivo,
-                    ...data.finalizados
-                ];
-                renderMatchesList();
-            }
+function initSync() {
+    const btnSync = document.getElementById('btn-sync');
+    const syncLog = document.getElementById('sync-log');
+
+    if (!btnSync) return;
+
+    btnSync.addEventListener('click', () => {
+        btnSync.disabled = true;
+        btnSync.innerText = 'Sincronizando...';
+        syncLog.innerHTML = '[Consola] Iniciando sincronización de ESPN...\n';
+
+        const formData = new FormData();
+        formData.append('action', 'force_sync');
+        formData.append('csrf_token', getCsrfToken());
+
+        fetch('admin_api.php', {
+            method: 'POST',
+            body: formData
         })
-        .catch(err => console.error("Error al obtener partidos para administración:", err));
-}
-
-function forceSyncData() {
-    addLog("[Sincronizador] Solicitando actualización en vivo a ESPN...", "info");
-    
-    fetch('sync.php?force=1')
         .then(response => response.json())
         .then(data => {
             if (data.status === 'success') {
-                addLog(`[Sincronizador] Sincronización exitosa. Partidos actualizados: ${data.partidos_actualizados}. Eventos registrados: ${data.eventos_registrados}`, "success");
-                
-                const now = new Date();
-                document.getElementById('last-sync-time-display').innerText = 
-                    String(now.getHours()).padStart(2, '0') + ':' + 
-                    String(now.getMinutes()).padStart(2, '0') + ':' + 
-                    String(now.getSeconds()).padStart(2, '0');
-                
-                loadMatches();
+                syncLog.innerHTML += `[Consola] ¡Éxito! ${data.message}\n`;
             } else {
-                addLog(`[Error Sincro] ${data.message}`, "error");
+                syncLog.innerHTML += `[Consola Error] ${data.message}\n`;
             }
         })
         .catch(err => {
-            console.error("Error en sincronización:", err);
-            addLog("[Error] Error de conexión con el servidor", "error");
+            syncLog.innerHTML += `[Error de Red] No se pudo conectar al servidor.\n`;
+            console.error(err);
+        })
+        .finally(() => {
+            btnSync.disabled = false;
+            btnSync.innerText = 'Forzar Sincronización';
         });
+    });
 }
 
-function resetAndReSync() {
-    if (!confirm("⚠️ ¿Estás totalmente seguro de vaciar la base de datos local? Se eliminarán todos los registros y se descargará todo el mundial desde cero de ESPN.")) {
+// ------------------------------------------------------------
+// 3. Control de Noticias y Previas
+// ------------------------------------------------------------
+let newsArticles = [];
+
+function initNews() {
+    const formNews = document.getElementById('form-news');
+    const btnCancel = document.getElementById('btn-cancel-edit');
+
+    if (!formNews) return;
+
+    formNews.addEventListener('submit', (e) => {
+        e.preventDefault();
+
+        const formData = new FormData(formNews);
+        formData.append('action', 'save_news');
+        formData.append('csrf_token', getCsrfToken());
+
+        fetch('admin_api.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                alert(data.message);
+                formNews.reset();
+                document.getElementById('news-id').value = '';
+                btnCancel.style.display = 'none';
+                loadArticles();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(err => {
+            alert('Error de red al guardar el artículo.');
+            console.error(err);
+        });
+    });
+
+    btnCancel.addEventListener('click', () => {
+        formNews.reset();
+        document.getElementById('news-id').value = '';
+        btnCancel.style.display = 'none';
+    });
+}
+
+function loadArticles() {
+    const container = document.getElementById('articles-container');
+    if (!container) return;
+
+    container.innerHTML = 'Cargando artículos...';
+
+    fetch('admin_api.php?action=list_news')
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            newsArticles = data.news;
+            renderArticles();
+        } else {
+            container.innerHTML = 'Error al cargar los artículos.';
+        }
+    })
+    .catch(err => {
+        container.innerHTML = 'Error de conexión.';
+        console.error(err);
+    });
+}
+
+function renderArticles() {
+    const container = document.getElementById('articles-container');
+    if (newsArticles.length === 0) {
+        container.innerHTML = '<div style="color:#64748b; text-align:center;">No hay artículos creados todavía.</div>';
         return;
     }
 
-    addLog("[Consola] Vaciando tablas locales de la base de datos...", "warning");
+    container.innerHTML = '';
+    newsArticles.forEach(art => {
+        const div = document.createElement('div');
+        div.className = 'article-item';
+
+        const label = art.tipo === 'pronostico' ? 'Pronóstico' : 'Fichaje';
+        const date = new Date(art.fecha_creacion).toLocaleDateString('es-ES');
+
+        div.innerHTML = `
+            <div class="article-info">
+                <h4>${escapeHtml(art.titulo)}</h4>
+                <div style="margin-top:5px;">
+                    <span style="background:${art.tipo === 'pronostico' ? 'rgba(234, 179, 8, 0.15)' : 'rgba(0, 242, 254, 0.15)'}; color:${art.tipo === 'pronostico' ? '#eab308' : '#00f2fe'};">${label}</span>
+                    <span style="font-size:0.75rem; color:#64748b;">${date}</span>
+                    <span style="font-size:0.75rem; color:#475569; font-family:monospace;">/${escapeHtml(art.slug)}</span>
+                </div>
+            </div>
+            <div class="article-actions">
+                <button class="btn-sm btn-edit" onclick="editArticle(${art.id})">Editar</button>
+                <button class="btn-sm btn-delete" onclick="deleteArticle(${art.id})">Eliminar</button>
+            </div>
+        `;
+        container.appendChild(div);
+    });
+}
+
+window.editArticle = function(id) {
+    const art = newsArticles.find(a => a.id === id);
+    if (!art) return;
+
+    document.getElementById('news-id').value = art.id;
+    document.getElementById('news-tipo').value = art.tipo;
+    document.getElementById('news-titulo').value = art.titulo;
+    document.getElementById('news-slug').value = art.slug;
+    document.getElementById('news-contenido').value = art.contenido;
+    document.getElementById('news-afiliado').value = art.enlace_afiliado || '';
+
+    document.getElementById('btn-cancel-edit').style.display = 'inline-block';
+    
+    // Hacer scroll suave hacia arriba (al formulario)
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+
+window.deleteArticle = function(id) {
+    if (!confirm('¿Estás seguro de que deseas eliminar este artículo? Esta acción no se puede deshacer.')) {
+        return;
+    }
 
     const formData = new FormData();
-    formData.append('action', 'reset_db');
+    formData.append('action', 'delete_news');
+    formData.append('id', id);
+    formData.append('csrf_token', getCsrfToken());
 
     fetch('admin_api.php', {
         method: 'POST',
@@ -107,142 +216,78 @@ function resetAndReSync() {
     .then(response => response.json())
     .then(data => {
         if (data.status === 'success') {
-            addLog("[Consola] Base de datos vaciada con éxito. Iniciando importación limpia desde ESPN...", "success");
-            
-            // Forzar descarga completa
-            fetch('sync.php?force=1')
-                .then(r => r.json())
-                .then(syncData => {
-                    if (syncData.status === 'success') {
-                        addLog(`[Consola] Sincronización limpia completada con éxito. Partidos: ${syncData.partidos_actualizados}.`, "success");
-                        loadMatches();
-                    } else {
-                        addLog(`[Error Sincro] ${syncData.message}`, "error");
-                    }
-                })
-                .catch(err => {
-                    console.error("Error en re-sincronización:", err);
-                    addLog("[Error] Falló la re-sincronización tras el vaciado. Ejecuta Forzar Sincronización manualmente.", "error");
-                });
+            alert(data.message);
+            loadArticles();
         } else {
-            addLog(`[Error Reset] ${data.message}`, "error");
+            alert('Error: ' + data.message);
         }
     })
     .catch(err => {
-        console.error("Error al resetear la base de datos:", err);
-        addLog("[Error] Error al conectar con el servidor", "error");
+        alert('Error de red al eliminar el artículo.');
+        console.error(err);
     });
+};
+
+// Helper simple para escapar HTML en cadenas para renderizado seguro
+function escapeHtml(str) {
+    if (!str) return '';
+    return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
 }
 
 // ------------------------------------------------------------
-// Renderizado y Utilerías
+// 4. Control de Configuración (Monetización)
 // ------------------------------------------------------------
-function getFlagUrl(codigo, logoUrl = '') {
-    if (logoUrl && logoUrl !== 'placeholder' && logoUrl !== '') {
-        return logoUrl;
-    }
-    if (!codigo || codigo === 'placeholder') {
-        return 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMiIgaGVpZ2h0PSIyMiIgdmlld0JveD0iMCAwIDMyIDIyIj48cmVjdCB3aWR0aD0iMzIiIGhlaWdodD0iMjIiIGZpbGw9IiMyNzI3MmEiLz48dGV4dCB4PSIxNiIgeT0iMTQiIGZpbGw9IiM3MTcxN2EiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjEyIiBmb250LXdlaWdodD0iYm9sZCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+PzwvdGV4dD48L3N2Zz4=';
-    }
-    return `https://flagcdn.com/w40/${codigo.toLowerCase()}.png`;
-}
+function initMonetization() {
+    const formConfig = document.getElementById('form-config');
+    if (!formConfig) return;
 
-function renderMatchesList() {
-    const container = document.getElementById('admin-matches-list');
-    container.innerHTML = '';
+    formConfig.addEventListener('submit', (e) => {
+        e.preventDefault();
 
-    // Filtrar partidos por la fase seleccionada
-    const list = allMatches.filter(m => m.fase === activePhase);
+        const formData = new FormData(formConfig);
+        formData.append('action', 'save_config');
+        formData.append('csrf_token', getCsrfToken());
 
-    if (list.length === 0) {
-        container.innerHTML = '<div style="color:var(--text-secondary); text-align:center; padding:20px;">No hay partidos cargados para esta fase. Haz clic en Forzar Sincronización.</div>';
-        return;
-    }
-
-    // Ordenar por ID
-    list.sort((a, b) => a.id - b.id);
-
-    list.forEach(m => {
-        const item = document.createElement('div');
-        item.className = 'admin-match-item';
-
-        const locName = m.equipo_local_nombre || 'Por definir';
-        const visName = m.equipo_visitante_nombre || 'Por definir';
-        
-        let scoreStr = '';
-        let statusHtml = '';
-
-        if (m.estado === 'pendiente') {
-            scoreStr = `<span style="color:var(--text-secondary); font-size:1.1rem; font-weight:700;">VS</span>`;
-            
-            const dateObj = new Date(m.fecha_hora.replace(/-/g, "/"));
-            const dateStr = dateObj.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' }) + ' ' + 
-                            dateObj.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
-            
-            statusHtml = `<span style="font-size:0.75rem; color:var(--text-secondary); font-weight:600;">${dateStr}</span>`;
-        } else if (m.estado === 'en_vivo') {
-            scoreStr = `<span style="color:var(--accent-live); font-size:1.3rem; font-weight:800;">${m.goles_local} - ${m.goles_visitante}</span>`;
-            statusHtml = `<span style="color:var(--accent-live); font-weight:700; font-size:0.8rem; animation:pulse 1.5s infinite;">LIVE Min ${m.minuto_actual}'</span>`;
-        } else { // finalizado
-            let penStr = '';
-            if (m.goles_penaltis_local !== null && m.goles_penaltis_visitante !== null) {
-                penStr = `<div style="font-size:0.65rem; color:var(--text-secondary);">P: ${m.goles_penaltis_local}-${m.goles_penaltis_visitante}</div>`;
+        fetch('admin_api.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                alert(data.message);
+            } else {
+                alert('Error: ' + data.message);
             }
-            scoreStr = `
-                <div style="text-align:center; font-weight:800; font-size:1.2rem;">
-                    ${m.goles_local} - ${m.goles_visitante}
-                    ${penStr}
-                </div>
-            `;
-            statusHtml = `<span style="font-size:0.75rem; color:var(--text-secondary); font-weight:700;">Finalizado</span>`;
-        }
-
-        item.innerHTML = `
-            <div style="font-size:0.75rem; font-weight:800; color:var(--accent-blue); width:65px;">ID ${m.id}</div>
-            
-            <div class="admin-match-teams">
-                <div class="admin-team">
-                    <img src="${getFlagUrl(m.equipo_local_codigo, m.equipo_local_logo)}" class="team-flag" alt="" style="width:26px; height:18px;">
-                    <span style="font-size:0.9rem; font-weight:600; text-overflow:ellipsis; overflow:hidden; white-space:nowrap;">${locName}</span>
-                </div>
-                
-                <div style="width:70px; display:flex; flex-direction:column; align-items:center;">
-                    ${scoreStr}
-                </div>
-                
-                <div class="admin-team visitor">
-                    <span style="font-size:0.9rem; font-weight:600; text-overflow:ellipsis; overflow:hidden; white-space:nowrap; order:1;">${visName}</span>
-                    <img src="${getFlagUrl(m.equipo_visitante_codigo, m.equipo_visitante_logo)}" class="team-flag" alt="" style="width:26px; height:18px; order:2;">
-                </div>
-            </div>
-            
-            <div style="width:110px; text-align:right;">
-                ${statusHtml}
-            </div>
-        `;
-
-        container.appendChild(item);
+        })
+        .catch(err => {
+            alert('Error de red al guardar la configuración.');
+            console.error(err);
+        });
     });
 }
 
-function addLog(text, type = "info") {
-    const logBox = document.getElementById('log-container');
-    const div = document.createElement('div');
-    
-    if (type === "success") {
-        div.style.color = "var(--accent-live)";
-    } else if (type === "warning") {
-        div.style.color = "var(--primary-color)";
-    } else if (type === "error") {
-        div.style.color = "var(--accent-red)";
-    }
-    
-    const now = new Date();
-    const timeStr = String(now.getHours()).padStart(2, '0') + ':' + 
-                    String(now.getMinutes()).padStart(2, '0') + ':' + 
-                    String(now.getSeconds()).padStart(2, '0');
+function loadConfig() {
+    const formConfig = document.getElementById('form-config');
+    if (!formConfig) return;
 
-    div.innerText = `[${timeStr}] ${text}`;
-    logBox.appendChild(div);
-    logBox.scrollTop = logBox.scrollHeight;
+    fetch('admin_api.php?action=get_config')
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            const config = data.config;
+            document.getElementById('conf-banner-header').value = config.banner_header || '';
+            document.getElementById('conf-banner-sidebar').value = config.banner_sidebar || '';
+            document.getElementById('conf-afiliado-apuestas').value = config.afiliado_apuestas_url || '';
+            document.getElementById('conf-afiliado-camisetas').value = config.afiliado_camisetas_url || '';
+        }
+    })
+    .catch(err => {
+        console.error('Error al cargar configuraciones:', err);
+    });
 }
