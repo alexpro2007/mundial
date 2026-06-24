@@ -48,3 +48,14 @@ Sincronización secuencial de marcadores y clasificaciones utilizando las siguie
 - **Pruebas de API:** Validar que `sync.php` puede recorrer las 5 ligas y poblar correctamente las tablas sin errores ni duplicaciones.
 - **Prueba de SEO y Metadatos:** Cargar las páginas y verificar que las etiquetas `<title>` y `<meta name="description">` cambian dinámicamente según la página.
 - **Prueba de Administración:** Guardar enlaces de afiliado y banners en el panel administrativo y verificar su correcta visualización e inserción en el frontend.
+
+## 7. Seguridad y Protección
+Para garantizar que el portal sea seguro frente a ataques comunes, implementaremos las siguientes medidas:
+- **Protección contra Inyecciones SQL (SQLi):** Todas las consultas a la base de datos se realizarán mediante sentencias preparadas de PDO (`prepare` y `execute`), evitando la concatenación directa de parámetros del usuario.
+- **Protección contra Scripting en Sitios Cruzados (XSS):** Todo el contenido que se imprima en el navegador y provenga de la base de datos o de inputs del usuario será escapado usando `htmlspecialchars()`. Para el contenido enriquecido redactado en el panel de administración, usaremos un sanitizador selectivo.
+- **Seguridad en el Panel de Administración (`admin.php`):**
+  - Implementación de un sistema de login con sesión segura y almacenamiento de contraseñas utilizando `password_hash()` de PHP (algoritmo bcrypt).
+  - Uso de tokens anti-CSRF (Cross-Site Request Forgery) en todos los formularios de configuración y creación de artículos.
+- **Seguridad del Script de Sincronización (`sync.php`):**
+  - Para evitar que usuarios malintencionados ralenticen el servidor ejecutando la sincronización repetidamente, el archivo `sync.php` requerirá una clave secreta (`sync.php?key=CLAVE_SECRETA`) para ejecutarse vía web, o bien solo podrá ejecutarse de forma interna/CLI.
+
