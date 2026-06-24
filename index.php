@@ -247,7 +247,7 @@ try {
                                     <h3 class="visual-player-name" style="font-size:1.15rem; margin-bottom:12px;"><?php echo htmlspecialchars($art['titulo']); ?></h3>
                                     
                                     <div class="visual-player-photo-wrapper" style="width:80px; height:80px; margin-bottom:15px;">
-                                        <img src="<?php echo htmlspecialchars($art['foto_jugador']); ?>" class="visual-player-photo" alt="" onerror="this.src='https://a.espncdn.com/i/headshots/soccer/players/full/default.png';">
+                                        <img src="<?php echo htmlspecialchars($art['foto_jugador']); ?>" class="visual-player-photo" alt="" onerror="this.style.display='none';">
                                     </div>
                                     
                                     <div class="visual-transfer-row" style="padding:10px 6px; margin-bottom:15px; gap:10px;">

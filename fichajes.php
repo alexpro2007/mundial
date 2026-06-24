@@ -109,7 +109,7 @@ try {
                                     
                                     <!-- Player Photo -->
                                     <div class="visual-player-photo-wrapper">
-                                        <img src="<?php echo htmlspecialchars($f['foto_jugador']); ?>" class="visual-player-photo" alt="<?php echo htmlspecialchars($f['titulo']); ?>" onerror="this.src='https://a.espncdn.com/i/headshots/soccer/players/full/default.png';">
+                                        <img src="<?php echo htmlspecialchars($f['foto_jugador']); ?>" class="visual-player-photo" alt="<?php echo htmlspecialchars($f['titulo']); ?>" onerror="this.style.display='none';">
                                     </div>
                                     
                                     <!-- Transfer Details -->
