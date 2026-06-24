@@ -1,22 +1,72 @@
 <?php
-// index.php - Vista Principal del Torneo Mundial 2026 (ESPN Live)
+// index.php - Vista Principal (Dashboard) del Portal de las 5 Grandes Ligas
 require_once __DIR__ . '/db.php';
 
-// Obtener estadísticas rápidas para la sección decorativa
-$total_teams = 48; // El mundial tiene 48 equipos por defecto
+// Cargar configuración de monetización
+$banner_header = '<div class="banner-placeholder">PUBLICIDAD SUPERIOR (728x90)</div>';
+$banner_sidebar = '<div class="banner-placeholder">PUBLICIDAD LATERAL (300x250)</div>';
+$afiliado_apuestas = 'https://www.google.com';
+$afiliado_camisetas = 'https://www.amazon.com';
+
 try {
-    $teams_count = intval($pdo->query("SELECT COUNT(*) FROM equipos")->fetchColumn());
-    if ($teams_count > 0) {
-        $total_teams = $teams_count;
+    $stmt = $pdo->query("SELECT * FROM configuracion");
+    foreach ($stmt->fetchAll() as $row) {
+        if ($row['clave'] === 'banner_header' && !empty($row['valor'])) $banner_header = $row['valor'];
+        if ($row['clave'] === 'banner_sidebar' && !empty($row['valor'])) $banner_sidebar = $row['valor'];
+        if ($row['clave'] === 'afiliado_apuestas_url' && !empty($row['valor'])) $afiliado_apuestas = $row['valor'];
+        if ($row['clave'] === 'afiliado_camisetas_url' && !empty($row['valor'])) $afiliado_camisetas = $row['valor'];
     }
-    $matches_played = intval($pdo->query("SELECT COUNT(*) FROM partidos WHERE estado = 'finalizado'")->fetchColumn());
-    $goals_query = $pdo->query("SELECT SUM(goles_local + goles_visitante) as total_goals FROM partidos WHERE estado != 'pendiente'")->fetch();
-    $total_goals = intval($goals_query['total_goals'] ?? 0);
-    $live_matches = intval($pdo->query("SELECT COUNT(*) FROM partidos WHERE estado = 'en_vivo'")->fetchColumn());
 } catch (Exception $e) {
-    $matches_played = 0;
-    $total_goals = 0;
-    $live_matches = 0;
+    // Silencioso
+}
+
+// Obtener partidos en vivo o recientes para el dashboard
+$partidos_live = [];
+$partidos_upcoming = [];
+try {
+    $partidos_live = $pdo->query("
+        SELECT p.*, el.nombre AS local_nombre, el.logo_url AS local_logo, ev.nombre AS visitante_nombre, ev.logo_url AS visitante_logo, l.nombre AS liga_nombre
+        FROM partidos p
+        JOIN equipos el ON p.equipo_local_id = el.id
+        JOIN equipos ev ON p.equipo_visitante_id = ev.id
+        JOIN ligas l ON p.liga_id = l.id
+        WHERE p.estado = 'en_vivo'
+        ORDER BY p.fecha_hora ASC
+    ")->fetchAll();
+
+    $partidos_upcoming = $pdo->query("
+        SELECT p.*, el.nombre AS local_nombre, el.logo_url AS local_logo, ev.nombre AS visitante_nombre, ev.logo_url AS visitante_logo, l.nombre AS liga_nombre
+        FROM partidos p
+        JOIN equipos el ON p.equipo_local_id = el.id
+        JOIN equipos ev ON p.equipo_visitante_id = ev.id
+        JOIN ligas l ON p.liga_id = l.id
+        WHERE p.estado = 'pendiente' AND p.fecha_hora >= NOW()
+        ORDER BY p.fecha_hora ASC
+        LIMIT 6
+    ")->fetchAll();
+
+    if (empty($partidos_upcoming)) {
+        // Fallback si no hay partidos futuros cargados: listar últimos finalizados o pendientes generales
+        $partidos_upcoming = $pdo->query("
+            SELECT p.*, el.nombre AS local_nombre, el.logo_url AS local_logo, ev.nombre AS visitante_nombre, ev.logo_url AS visitante_logo, l.nombre AS liga_nombre
+            FROM partidos p
+            JOIN equipos el ON p.equipo_local_id = el.id
+            JOIN equipos ev ON p.equipo_visitante_id = ev.id
+            JOIN ligas l ON p.liga_id = l.id
+            ORDER BY p.fecha_hora DESC
+            LIMIT 6
+        ")->fetchAll();
+    }
+} catch (Exception $e) {
+    // Silencioso
+}
+
+// Obtener artículos de noticias recientes (fichajes y pronósticos)
+$articulos = [];
+try {
+    $articulos = $pdo->query("SELECT * FROM noticias ORDER BY fecha_creacion DESC LIMIT 6")->fetchAll();
+} catch (Exception $e) {
+    // Silencioso
 }
 ?>
 <!DOCTYPE html>
@@ -24,57 +74,54 @@ try {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Copa del Mundo 2026 - Tablero de Resultados en Vivo</title>
+    <title>5 Grandes Ligas - Marcadores en Vivo, Apuestas y Fichajes</title>
+    <meta name="description" content="Sigue los marcadores en vivo de la Premier League, LaLiga, Serie A, Bundesliga y Ligue 1. Previas de apuestas optimizadas y rumores de fichajes actualizados.">
     <link rel="stylesheet" href="style.css?v=<?php echo time(); ?>">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
 
-    <!-- Elementos Decorativos de Fondo (Efecto de luces) -->
-    <div class="bg-glow bg-glow-1"></div>
-    <div class="bg-glow bg-glow-2"></div>
-    <div class="bg-glow bg-glow-3"></div>
-
-    <!-- Header & Navegación Principal -->
+    <!-- Header & Navegación -->
     <header>
         <div class="nav-container">
-            <div class="logo-section">
-                <!-- Icono de Trofeo SVG -->
+            <a href="index.php" class="logo-section" style="text-decoration: none;">
                 <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
-                    <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
-                    <path d="M4 22h16"></path>
-                    <path d="M10 14.66V17c0 .55-.45 1-1 1H4v2h16v-2h-5c-.55 0-1-.45-1-1v-2.34"></path>
-                    <path d="M12 2a6 6 0 0 1 6 6v5a6 6 0 0 1-6 6 6 6 0 0 1-6-6V8a6 6 0 0 1 6-6z"></path>
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path>
+                    <path d="M2 12h20"></path>
                 </svg>
-                <h1>MUNDIAL 2026</h1>
-            </div>
+                <h1 style="color:#ffffff; font-weight:800; margin:0;">5 LIGAS</h1>
+            </a>
             
             <nav class="main-nav">
-                <button class="nav-btn active" data-view="home">Inicio</button>
-                <button class="nav-btn" data-view="matches">Partidos</button>
-                <button class="nav-btn" data-view="groups">Grupos</button>
-                <button class="nav-btn" data-view="stats">Estadísticas</button>
-                <button class="nav-btn" data-view="bracket">Fase Final</button>
+                <a href="index.php" class="nav-btn active" style="text-decoration:none;">Inicio</a>
+                <a href="liga.php?id=esp.1" class="nav-btn" style="text-decoration:none;">LaLiga</a>
+                <a href="liga.php?id=eng.1" class="nav-btn" style="text-decoration:none;">Premier</a>
+                <a href="liga.php?id=ita.1" class="nav-btn" style="text-decoration:none;">Serie A</a>
+                <a href="liga.php?id=ger.1" class="nav-btn" style="text-decoration:none;">Bundesliga</a>
+                <a href="liga.php?id=fra.1" class="nav-btn" style="text-decoration:none;">Ligue 1</a>
+                <a href="fichajes.php" class="nav-btn" style="text-decoration:none;">Fichajes</a>
             </nav>
         </div>
     </header>
 
-    <!-- Contenido Principal -->
     <main>
+        <!-- Banner de Publicidad Adaptativo Superior -->
+        <div class="banner-wrapper">
+            <?php echo $banner_header; ?>
+        </div>
 
-        <!-- SECCIÓN: INICIO (HOME) -->
-        <section id="home-view" class="view-section active">
-            <div class="home-hero centered-hero">
-                <div class="hero-text text-center">
-                    <div class="badge-world-cup">COPA MUNDIAL DE LA FIFA 2026</div>
-                    <h2>Resultados Reales en Tiempo Real</h2>
-                    <p class="hero-subtitle">Sigue la emoción en vivo, estadísticas oficiales y la evolución de los grupos y eliminatorias directo desde la API de ESPN.</p>
-                </div>
+        <!-- Layout de dos columnas -->
+        <div class="main-layout">
+            
+            <!-- Contenido Principal (Izquierda) -->
+            <div class="main-content">
                 
-                <div class="countdown-glow-wrapper">
+                <!-- Cuenta Regresiva de Próximo Partido de Interés -->
+                <div class="countdown-glow-wrapper" style="margin-bottom: 30px;">
                     <div class="countdown-container-large">
                         <div class="countdown-title-large">
-                            <span class="live-dot-indicator"></span> CUENTA REGRESIVA PARA LA GRAN FINAL
+                            <span class="live-dot-indicator"></span> CUENTA ATRÁS PARA EL PRÓXIMO PARTIDO
                         </div>
                         <div class="timer-large">
                             <div class="time-block-large">
@@ -100,342 +147,173 @@ try {
                     </div>
                 </div>
 
-                <div class="hero-actions">
-                    <button class="btn btn-primary btn-large btn-glowing" onclick="switchView('matches')">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle; margin-right:8px;">
-                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                            <line x1="16" y1="2" x2="16" y2="6"></line>
-                            <line x1="8" y1="2" x2="8" y2="6"></line>
-                            <line x1="3" y1="10" x2="21" y2="10"></line>
-                        </svg>
-                        Explorar Partidos
-                    </button>
-                    <button class="btn btn-outline btn-large" onclick="switchView('bracket')">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle; margin-right:8px;">
-                            <path d="M12 22V12"></path>
-                            <path d="M12 12H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2z"></path>
-                            <path d="M12 12h8a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2h-8a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2z"></path>
-                        </svg>
-                        Fase Eliminatoria
-                    </button>
+                <!-- Partidos en Vivo (Si los hay) -->
+                <?php if (!empty($partidos_live)): ?>
+                    <h2 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 20px; border-left: 4px solid var(--accent-live); padding-left: 10px;">PARTIDOS EN VIVO</h2>
+                    <div class="matches-grid" style="display:flex; flex-direction:column; gap:15px; margin-bottom: 40px;">
+                        <?php foreach ($partidos_live as $p): ?>
+                            <div class="match-card-clickable" data-match-id="<?php echo $p['id']; ?>" style="cursor:pointer; background:rgba(16, 24, 40, 0.7); border:1px solid rgba(16, 185, 129, 0.3); border-radius:12px; padding:15px; display:flex; justify-content:space-between; align-items:center;">
+                                <div style="font-size:0.75rem; font-weight:800; color:var(--accent-live);"><?php echo htmlspecialchars($p['liga_nombre']); ?></div>
+                                <div style="display:flex; align-items:center; gap:15px; flex:1; justify-content:center;">
+                                    <div style="display:flex; align-items:center; gap:8px;">
+                                        <span style="font-weight:600;"><?php echo htmlspecialchars($p['local_nombre']); ?></span>
+                                        <img src="<?php echo htmlspecialchars($p['local_logo']); ?>" style="width:24px; height:24px; object-fit:contain;" alt="">
+                                    </div>
+                                    <span class="match-score-live" style="font-weight:800; font-size:1.2rem; color:var(--accent-live);"><?php echo $p['goles_local']; ?> - <?php echo $p['goles_visitante']; ?></span>
+                                    <div style="display:flex; align-items:center; gap:8px;">
+                                        <img src="<?php echo htmlspecialchars($p['visitante_logo']); ?>" style="width:24px; height:24px; object-fit:contain;" alt="">
+                                        <span style="font-weight:600;"><?php echo htmlspecialchars($p['visitante_nombre']); ?></span>
+                                    </div>
+                                </div>
+                                <span class="badge-live-pulse" style="font-size:0.75rem; background:rgba(16, 185, 129, 0.1); color:var(--accent-live); padding:4px 8px; border-radius:6px; font-weight:700;">LIVE <?php echo $p['minuto_actual']; ?>'</span>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
+
+                <!-- Agenda de Partidos y Resultados Recientes -->
+                <h2 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 20px; border-left: 4px solid var(--accent-blue); padding-left: 10px;">PARTIDOS DESTACADOS</h2>
+                <div class="matches-list-container" style="display:flex; flex-direction:column; gap:15px; margin-bottom: 40px;">
+                    <?php if (empty($partidos_upcoming)): ?>
+                        <div style="color:var(--text-secondary); text-align:center; padding:20px;">No hay partidos cargados actualmente. Por favor sincroniza desde el panel administrativo.</div>
+                    <?php else: ?>
+                        <?php foreach ($partidos_upcoming as $p): ?>
+                            <?php 
+                            $dateObj = new DateTIme($p['fecha_hora']);
+                            $state_label = '';
+                            if ($p['estado'] === 'pendiente') {
+                                $state_label = $dateObj->format('d/m H:i');
+                            } elseif ($p['estado'] === 'finalizado') {
+                                $state_label = 'Finalizado';
+                            }
+                            ?>
+                            <div class="match-card-clickable" data-match-id="<?php echo $p['id']; ?>" style="cursor:pointer; background:rgba(255, 255, 255, 0.02); border:1px solid var(--border-glass); border-radius:12px; padding:15px; display:flex; justify-content:space-between; align-items:center;">
+                                <div style="font-size:0.75rem; font-weight:700; color:var(--text-secondary); width:120px;"><?php echo htmlspecialchars($p['liga_nombre']); ?></div>
+                                <div style="display:flex; align-items:center; gap:15px; flex:1; justify-content:center;">
+                                    <div style="display:flex; align-items:center; gap:8px; width:40%; justify-content:flex-end;">
+                                        <span style="font-weight:600; font-size:0.9rem; text-align:right;"><?php echo htmlspecialchars($p['local_nombre']); ?></span>
+                                        <img src="<?php echo htmlspecialchars($p['local_logo']); ?>" style="width:24px; height:24px; object-fit:contain;" alt="">
+                                    </div>
+                                    <span style="font-weight:800; font-size:1.1rem; min-width:60px; text-align:center;">
+                                        <?php if ($p['estado'] === 'pendiente'): ?>
+                                            VS
+                                        <?php else: ?>
+                                            <?php echo $p['goles_local']; ?> - <?php echo $p['goles_visitante']; ?>
+                                        <?php endif; ?>
+                                    </span>
+                                    <div style="display:flex; align-items:center; gap:8px; width:40%; justify-content:flex-start;">
+                                        <img src="<?php echo htmlspecialchars($p['visitante_logo']); ?>" style="width:24px; height:24px; object-fit:contain;" alt="">
+                                        <span style="font-weight:600; font-size:0.9rem; text-align:left;"><?php echo htmlspecialchars($p['visitante_nombre']); ?></span>
+                                    </div>
+                                </div>
+                                <div style="font-size:0.75rem; color:var(--text-secondary); font-weight:600; width:80px; text-align:right;"><?php echo $state_label; ?></div>
+                            </div>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
                 </div>
+
+                <!-- Sección de Noticias / Previa y Pronósticos -->
+                <h2 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 20px; border-left: 4px solid var(--primary-color); padding-left: 10px;">ANÁLISIS Y PRONÓSTICOS DESTACADOS</h2>
+                <div class="news-grid">
+                    <?php if (empty($articulos)): ?>
+                        <!-- Plantillas mock de SEO y afiliados si no hay noticias insertadas todavía -->
+                        <div class="news-card">
+                            <span class="news-badge badge-pronostico">Pronóstico</span>
+                            <h3 class="news-card-title">Real Madrid vs Barcelona: Pronóstico, apuestas y previa de El Clásico</h3>
+                            <p class="news-card-excerpt">Analizamos el gran duelo de LaLiga en el Santiago Bernabéu. Claves tácticas, bajas de última hora y las mejores cuotas de afiliado para apostar seguro.</p>
+                            <div class="news-card-footer">
+                                <span>Hace 1 día</span>
+                                <a href="pronosticos.php" class="btn-read-more">Previa y Cuotas →</a>
+                            </div>
+                        </div>
+                        <div class="news-card">
+                            <span class="news-badge badge-fichaje">Fichaje</span>
+                            <h3 class="news-card-title">Mercado en vivo: Rumores de traspasos, altas y bajas de las grandes ligas</h3>
+                            <p class="news-card-excerpt">Entérate de las últimas novedades sobre los fichajes más sonados de la Premier League, LaLiga y Serie A. Última hora directo del mercado europeo.</p>
+                            <div class="news-card-footer">
+                                <span>Hace 2 horas</span>
+                                <a href="fichajes.php" class="btn-read-more">Ver Fichajes →</a>
+                            </div>
+                        </div>
+                    <?php else: ?>
+                        <?php foreach ($articulos as $art): ?>
+                            <?php 
+                            $badge_class = $art['tipo'] === 'pronostico' ? 'badge-pronostico' : 'badge-fichaje';
+                            $label = $art['tipo'] === 'pronostico' ? 'Pronóstico' : 'Fichaje';
+                            $link = $art['tipo'] === 'pronostico' ? "pronosticos.php?slug={$art['slug']}" : "fichajes.php#{$art['slug']}";
+                            ?>
+                            <div class="news-card">
+                                <span class="news-badge <?php echo $badge_class; ?>"><?php echo $label; ?></span>
+                                <h3 class="news-card-title"><?php echo htmlspecialchars($art['titulo']); ?></h3>
+                                <p class="news-card-excerpt"><?php echo strip_tags($art['contenido']); ?></p>
+                                <div class="news-card-footer">
+                                    <span><?php echo date('d/m/Y', strtotime($art['fecha_creacion'])); ?></span>
+                                    <a href="<?php echo $link; ?>" class="btn-read-more">Leer Más →</a>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </div>
+
             </div>
 
-            <!-- Panel Decorativo de Métricas del Torneo -->
-            <div class="tournament-stats-grid">
-                <div class="stat-card decor-card">
-                    <div class="stat-icon">⚽</div>
-                    <div class="stat-info">
-                        <span class="stat-val-big"><?php echo $total_goals; ?></span>
-                        <span class="stat-lbl-sub">Goles Anotados</span>
-                    </div>
-                    <div class="card-glow-green"></div>
-                </div>
-                <div class="stat-card decor-card">
-                    <div class="stat-icon">🏆</div>
-                    <div class="stat-info">
-                        <span class="stat-val-big"><?php echo $total_teams; ?></span>
-                        <span class="stat-lbl-sub">Selecciones Unidas</span>
-                    </div>
-                    <div class="card-glow-gold"></div>
-                </div>
-                <div class="stat-card decor-card">
-                    <div class="stat-icon">🏁</div>
-                    <div class="stat-info">
-                        <span class="stat-val-big"><?php echo $matches_played; ?></span>
-                        <span class="stat-lbl-sub">Partidos Finalizados</span>
-                    </div>
-                    <div class="card-glow-blue"></div>
-                </div>
-                <div class="stat-card decor-card <?php echo $live_matches > 0 ? 'live-pulse' : ''; ?>">
-                    <div class="stat-icon"><?php echo $live_matches > 0 ? '🔴' : '🕒'; ?></div>
-                    <div class="stat-info">
-                        <span class="stat-val-big"><?php echo $live_matches; ?></span>
-                        <span class="stat-lbl-sub">En Vivo Ahora</span>
-                    </div>
-                    <div class="card-glow-red"></div>
-                </div>
-            </div>
-        </section>
-
-        <!-- SECCIÓN: PARTIDOS -->
-        <section id="matches-view" class="view-section">
-            <h2 class="section-title">Calendario y <span>Resultados Reales</span></h2>
-            
-            <div class="matches-subtabs">
-                <button class="subtab-btn active" data-subtab="live">En Vivo <span id="live-count-badge" style="display:none; background:var(--accent-red); color:#fff; padding:2px 6px; border-radius:10px; font-size:0.7rem; margin-left:5px;">0</span></button>
-                <button class="subtab-btn" data-subtab="upcoming">Próximos Partidos</button>
-                <button class="subtab-btn" data-subtab="finished">Resultados</button>
-            </div>
-
-            <!-- Contenedor dinámico de partidos -->
-            <div id="matches-container" class="matches-grid">
-                <!-- Se rellena con JS -->
-            </div>
-            
-            <div id="no-matches-msg" style="display:none; text-align:center; padding:40px; color:var(--text-secondary); font-size:1.1rem;">
-                No hay partidos para mostrar en esta categoría.
-            </div>
-        </section>
-
-        <!-- SECCIÓN: GRUPOS -->
-        <section id="groups-view" class="view-section">
-            <h2 class="section-title">Clasificación de <span>Grupos</span></h2>
-            
-            <!-- Botonera de Grupos A-L -->
-            <div class="groups-selector">
-                <button class="group-select-btn active" data-group="A">Grupo A</button>
-                <button class="group-select-btn" data-group="B">Grupo B</button>
-                <button class="group-select-btn" data-group="C">Grupo C</button>
-                <button class="group-select-btn" data-group="D">Grupo D</button>
-                <button class="group-select-btn" data-group="E">Grupo E</button>
-                <button class="group-select-btn" data-group="F">Grupo F</button>
-                <button class="group-select-btn" data-group="G">Grupo G</button>
-                <button class="group-select-btn" data-group="H">Grupo H</button>
-                <button class="group-select-btn" data-group="I">Grupo I</button>
-                <button class="group-select-btn" data-group="J">Grupo J</button>
-                <button class="group-select-btn" data-group="K">Grupo K</button>
-                <button class="group-select-btn" data-group="L">Grupo L</button>
-            </div>
-
-            <!-- Tabla de Clasificación -->
-            <div class="glass-card" style="padding:0;">
-                <div class="table-responsive">
-                    <table class="standings-table">
-                        <thead>
-                            <tr>
-                                <th>Equipo</th>
-                                <th class="num-col" title="Partidos Jugados">PJ</th>
-                                <th class="num-col" title="Partidos Ganados">PG</th>
-                                <th class="num-col" title="Partidos Empatados">PE</th>
-                                <th class="num-col" title="Partidos Perdidos">PP</th>
-                                <th class="num-col" title="Goles a Favor">GF</th>
-                                <th class="num-col" title="Goles en Contra">GC</th>
-                                <th class="num-col" title="Diferencia de Goles">DG</th>
-                                <th class="pts-col" title="Puntos Acumulados">PTS</th>
-                            </tr>
-                        </thead>
-                        <tbody id="standings-tbody">
-                            <!-- Se rellena con JS -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            <div style="font-size:0.8rem; color:var(--text-secondary); margin-top:10px; display:flex; align-items:center; gap:8px;">
-                <span style="display:inline-block; width:12px; height:12px; background:rgba(16, 185, 129, 0.15); border-left:3px solid var(--accent-live);"></span>
-                <span>Los dos primeros de cada grupo y los 8 mejores terceros avanzan a Dieciseisavos de Final.</span>
-            </div>
-        </section>
-
-        <!-- SECCIÓN: ESTADÍSTICAS -->
-        <section id="stats-view" class="view-section">
-            <h2 class="section-title">Líderes de <span>Estadísticas Reales</span></h2>
-            
-            <div class="stats-grid">
-                <!-- Máximos Goleadores -->
-                <div class="stats-card">
-                    <div class="stats-card-title">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path>
-                            <path d="M2 12h20"></path>
-                        </svg>
-                        Máximos Goleadores
-                    </div>
-                    <div class="stats-list" id="stats-goleadores">
-                        <!-- Se rellena con JS -->
-                    </div>
-                </div>
-
-                <!-- Máximos Asistentes -->
-                <div class="stats-card">
-                    <div class="stats-card-title">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M17 6.1H3"></path>
-                            <path d="M21 12H3"></path>
-                            <path d="M17 17.9H3"></path>
-                        </svg>
-                        Máximos Asistentes
-                    </div>
-                    <div class="stats-list" id="stats-asistentes">
-                        <!-- Se rellena con JS -->
-                    </div>
-                </div>
-
-                <!-- Tarjetas Amarillas -->
-                <div class="stats-card">
-                    <div class="stats-card-title">
-                        <rect x="5" y="3" width="14" height="18" rx="2" ry="2" fill="var(--primary-color)" style="stroke:none;"></rect>
-                        <span style="margin-left: 10px;">Tarjetas Amarillas</span>
-                    </div>
-                    <div class="stats-list" id="stats-amarillas">
-                        <!-- Se rellena con JS -->
-                    </div>
-                </div>
-
-                <!-- Tarjetas Rojas -->
-                <div class="stats-card">
-                    <div class="stats-card-title">
-                        <rect x="5" y="3" width="14" height="18" rx="2" ry="2" fill="var(--accent-red)" style="stroke:none;"></rect>
-                        <span style="margin-left: 10px;">Tarjetas Rojas</span>
-                    </div>
-                    <div class="stats-list" id="stats-rojas">
-                        <!-- Se rellena con JS -->
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- SECCIÓN: FASE FINAL (BRACKET) -->
-        <section id="bracket-view" class="view-section">
-            <h2 class="section-title">Cuadro de la <span>Fase Eliminatoria (32 Selecciones)</span></h2>
-            
-            <div class="bracket-wrapper">
-                <div class="bracket-container">
+            <!-- Columna Barra Lateral (Derecha) -->
+            <div class="sidebar-layout">
+                <div class="sticky-sidebar">
                     
-                    <!-- LADO IZQUIERDO -->
-                    <!-- Dieciseisavos (Izquierda 1-8) -->
-                    <div class="bracket-column">
-                        <div class="bracket-header">Dieciseisavos (I)</div>
-                        <div id="bracket-dieciseisavos-1" class="bracket-card-container"></div>
-                        <div id="bracket-dieciseisavos-2" class="bracket-card-container"></div>
-                        <div id="bracket-dieciseisavos-3" class="bracket-card-container"></div>
-                        <div id="bracket-dieciseisavos-4" class="bracket-card-container"></div>
-                        <div id="bracket-dieciseisavos-5" class="bracket-card-container"></div>
-                        <div id="bracket-dieciseisavos-6" class="bracket-card-container"></div>
-                        <div id="bracket-dieciseisavos-7" class="bracket-card-container"></div>
-                        <div id="bracket-dieciseisavos-8" class="bracket-card-container"></div>
+                    <!-- Banner de Publicidad Lateral -->
+                    <div class="banner-sidebar-wrapper">
+                        <?php echo $banner_sidebar; ?>
                     </div>
 
-                    <!-- Octavos (Izquierda 1-4) -->
-                    <div class="bracket-column">
-                        <div class="bracket-header">Octavos de Final</div>
-                        <div id="bracket-octavos-1" class="bracket-card-container"></div>
-                        <div id="bracket-octavos-2" class="bracket-card-container"></div>
-                        <div id="bracket-octavos-3" class="bracket-card-container"></div>
-                        <div id="bracket-octavos-4" class="bracket-card-container"></div>
-                    </div>
-
-                    <!-- Cuartos (Izquierda 1-2) -->
-                    <div class="bracket-column">
-                        <div class="bracket-header">Cuartos de Final</div>
-                        <div id="bracket-cuartos-1" class="bracket-card-container"></div>
-                        <div id="bracket-cuartos-2" class="bracket-card-container"></div>
-                    </div>
-
-                    <!-- Semifinales (Izquierda 1) -->
-                    <div class="bracket-column">
-                        <div class="bracket-header">Semifinales</div>
-                        <div id="bracket-semis-1" class="bracket-card-container"></div>
-                    </div>
-
-                    <!-- CENTRO -->
-                    <!-- Gran Final / Campeón / Tercer Puesto -->
-                    <div class="bracket-column final-col">
-                        
-                        <!-- Campeón -->
-                        <div class="bracket-champion-box" id="champion-box" style="display:none;">
-                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
-                                <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
-                                <path d="M4 22h16"></path>
-                                <path d="M10 14.66V17c0 .55-.45 1-1 1H4v2h16v-2h-5c-.55 0-1-.45-1-1v-2.34"></path>
-                                <path d="M12 2a6 6 0 0 1 6 6v5a6 6 0 0 1-6 6 6 6 0 0 1-6-6V8a6 6 0 0 1 6-6z"></path>
-                            </svg>
-                            <div class="bracket-champion-title">Campeón Mundial</div>
-                            <div class="bracket-champion-name" id="champion-name">Por Definir</div>
+                    <!-- Caja de Afiliado para apostar destacado -->
+                    <div class="betting-widget">
+                        <span class="betting-widget-title">🔥 APUESTA DE LA JORNADA</span>
+                        <div class="betting-teams">
+                            <span style="font-weight:700;">Top Partido Europeo</span>
+                            <span style="color:var(--primary-color); font-weight:800; font-size:0.75rem; background:rgba(255,215,0,0.1); padding:2px 6px; border-radius:4px;">100% SEGURO</span>
                         </div>
-
-                        <!-- Final -->
-                        <div>
-                            <div class="bracket-header">Gran Final</div>
-                            <div id="bracket-final" class="bracket-card-container"></div>
+                        <div class="betting-odds-row">
+                            <div class="bet-option">
+                                <span class="bet-label">Local</span>
+                                <span class="bet-value">2.15</span>
+                            </div>
+                            <div class="bet-option">
+                                <span class="bet-label">Empate</span>
+                                <span class="bet-value">3.40</span>
+                            </div>
+                            <div class="bet-option">
+                                <span class="bet-label">Visita</span>
+                                <span class="bet-value">3.10</span>
+                            </div>
                         </div>
-
-                        <!-- Tercer Puesto -->
-                        <div>
-                            <div class="bracket-header">Tercer Puesto</div>
-                            <div id="bracket-tercero" class="bracket-card-container"></div>
-                        </div>
+                        <a href="<?php echo htmlspecialchars($afiliado_apuestas); ?>" target="_blank" rel="nofollow noopener" class="btn-bet-now">Apostar con Bono →</a>
                     </div>
 
-                    <!-- LADO DERECHO -->
-                    <!-- Semifinales (Derecha 2) -->
-                    <div class="bracket-column">
-                        <div class="bracket-header">Semifinales</div>
-                        <div id="bracket-semis-2" class="bracket-card-container"></div>
+                    <!-- Enlace a Tienda / Camisetas -->
+                    <div class="betting-widget" style="border-color: rgba(14, 165, 233, 0.2);">
+                        <span class="betting-widget-title" style="color: var(--accent-blue);">🛒 TIENDA DE FÚTBOL</span>
+                        <p style="font-size:0.8rem; color:var(--text-secondary); margin-bottom: 15px;">Consigue las camisetas oficiales de tus equipos favoritos de las 5 grandes ligas de Europa con descuentos increíbles de hasta el 30%.</p>
+                        <a href="<?php echo htmlspecialchars($afiliado_camisetas); ?>" target="_blank" rel="nofollow noopener" class="btn-bet-now" style="background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); color:#ffffff; box-shadow: 0 4px 15px rgba(14, 165, 233, 0.2);">Ver Camisetas en Oferta</a>
                     </div>
 
-                    <!-- Cuartos (Derecha 3-4) -->
-                    <div class="bracket-column">
-                        <div class="bracket-header">Cuartos de Final</div>
-                        <div id="bracket-cuartos-3" class="bracket-card-container"></div>
-                        <div id="bracket-cuartos-4" class="bracket-card-container"></div>
+                    <!-- Juego Responsable -->
+                    <div style="font-size:0.7rem; color:#64748b; text-align:center; padding:15px; border-radius:10px; background:rgba(255,255,255,0.01); border:1px solid rgba(255,255,255,0.03);">
+                        🔞 <strong>+18 JUEGO RESPONSABLE</strong><br>
+                        Las apuestas deportivas conllevan riesgos financieros. Juega con moderación y bajo tu propia responsabilidad.
                     </div>
-
-                    <!-- Octavos (Derecha 5-8) -->
-                    <div class="bracket-column">
-                        <div class="bracket-header">Octavos de Final</div>
-                        <div id="bracket-octavos-5" class="bracket-card-container"></div>
-                        <div id="bracket-octavos-6" class="bracket-card-container"></div>
-                        <div id="bracket-octavos-7" class="bracket-card-container"></div>
-                        <div id="bracket-octavos-8" class="bracket-card-container"></div>
-                    </div>
-
-                    <!-- Dieciseisavos (Derecha 9-16) -->
-                    <div class="bracket-column">
-                        <div class="bracket-header">Dieciseisavos (D)</div>
-                        <div id="bracket-dieciseisavos-9" class="bracket-card-container"></div>
-                        <div id="bracket-dieciseisavos-10" class="bracket-card-container"></div>
-                        <div id="bracket-dieciseisavos-11" class="bracket-card-container"></div>
-                        <div id="bracket-dieciseisavos-12" class="bracket-card-container"></div>
-                        <div id="bracket-dieciseisavos-13" class="bracket-card-container"></div>
-                        <div id="bracket-dieciseisavos-14" class="bracket-card-container"></div>
-                        <div id="bracket-dieciseisavos-15" class="bracket-card-container"></div>
-                        <div id="bracket-dieciseisavos-16" class="bracket-card-container"></div>
-                    </div>
-
                 </div>
             </div>
-        </section>
 
+        </div>
     </main>
 
-    <!-- Modal de Alineaciones de Partido -->
-    <div id="match-modal" class="modal">
-        <div class="modal-content glass-card">
-            <span class="close-modal">&times;</span>
-            <div id="modal-match-details">
-                <!-- Se rellena con JS -->
-            </div>
-            
-            <div class="lineups-section">
-                <div class="lineup-tabs">
-                    <button class="lineup-tab-btn active" data-side="local" id="tab-team-local">Equipo Local</button>
-                    <button class="lineup-tab-btn" data-side="visitante" id="tab-team-visitante">Equipo Visitante</button>
-                </div>
-                
-                <div id="lineup-status-badge" class="lineup-status-badge">Alineación Probable</div>
-                
-                <div class="lineup-content">
-                    <div class="lineup-column">
-                        <h4>Titulares</h4>
-                        <div id="lineup-starters" class="players-list">
-                            <!-- Se rellena con JS -->
-                        </div>
-                    </div>
-                    <div class="lineup-column">
-                        <h4>Suplentes</h4>
-                        <div id="lineup-bench" class="players-list">
-                            <!-- Se rellena con JS -->
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- Footer -->
+    <footer style="text-align:center; padding:40px 20px; border-top:1px solid var(--border-glass); margin-top:60px; color:#64748b; font-size:0.85rem;">
+        <p>&copy; <?php echo date('Y'); ?> 5 Ligas Europa. Todos los derechos reservados.</p>
+        <p style="margin-top:10px; font-size:0.75rem;">Diseñado con fines informativos y optimización SEO. Datos en vivo provistos por ESPN API. Todos los enlaces comerciales contienen etiquetas de afiliado.</p>
+    </footer>
 
-    <!-- Scripts -->
     <script src="script.js?v=<?php echo time(); ?>"></script>
 </body>
 </html>
