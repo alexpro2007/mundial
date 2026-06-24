@@ -47,7 +47,7 @@ Sincronización secuencial de marcadores y clasificaciones utilizando las siguie
 ## 6. Plan de Verificación
 - **Pruebas de API:** Validar que `sync.php` puede recorrer las 5 ligas y poblar correctamente las tablas sin errores ni duplicaciones.
 - **Prueba de SEO y Metadatos:** Cargar las páginas y verificar que las etiquetas `<title>` y `<meta name="description">` cambian dinámicamente según la página.
-- **Prueba de Administración:** Guardar enlaces de afiliado y banners en el panel administrativo y verificar su correcta visualización e inserción en el frontend.
+- **Pruebas de Administración:** Guardar enlaces de afiliado y banners en el panel administrativo y verificar su correcta visualización e inserción en el frontend.
 
 ## 7. Seguridad y Protección
 Para garantizar que el portal sea seguro frente a ataques comunes, implementaremos las siguientes medidas:
@@ -58,4 +58,29 @@ Para garantizar que el portal sea seguro frente a ataques comunes, implementarem
   - Uso de tokens anti-CSRF (Cross-Site Request Forgery) en todos los formularios de configuración y creación de artículos.
 - **Seguridad del Script de Sincronización (`sync.php`):**
   - Para evitar que usuarios malintencionados ralenticen el servidor ejecutando la sincronización repetidamente, el archivo `sync.php` requerirá una clave secreta (`sync.php?key=CLAVE_SECRETA`) para ejecutarse vía web, o bien solo podrá ejecutarse de forma interna/CLI.
+
+## 8. Automatización e Integración de Rumores Reales y Fichajes Visuales (v1.3)
+Para cumplir con los nuevos requisitos de automatización total de noticias reales y la representación visual de fichajes de alto impacto (estilo cromo/tarjeta premium), se implementan las siguientes especificaciones:
+
+### 8.1 Sincronización de Noticias Reales (ESPN News API)
+Durante el proceso de sincronización en `sync.php`, se consumirá la API de noticias de ESPN:
+`https://site.api.espn.com/apis/site/v2/sports/soccer/{liga_id}/news`
+- **Evitar duplicados:** Se validará que el titular no exista en la base de datos antes de guardarlo.
+- **Categorización:** Se analizarán los metadatos de la noticia (`categories`). Si se detectan tags de atletas (`type => 'athlete'`) y equipos (`type => 'team'`), se catalogará de forma inteligente:
+  - Se obtendrá la foto del jugador desde el CDN oficial de ESPN: `https://a.espncdn.com/i/headshots/soccer/players/full/{athleteId}.png`.
+  - Se asignarán los logos de los equipos desde el CDN de ESPN: `https://a.espncdn.com/i/teamlogos/soccer/500/{teamId}.png`.
+  - Se inferirá el tipo de contrato ("Fichaje Confirmado", "Préstamo", "Rumor / Interés") a partir de palabras clave en el titular.
+
+### 8.2 Tarjeta Visual Premium de Fichajes (Fichajes Hechos y Rumores)
+Si un artículo cuenta con el campo `foto_jugador` y logos de equipos (origen/destino), se renderizará una tarjeta premium con el siguiente diseño responsivo (inspirado en la imagen de referencia):
+- **Parte Superior:** Foto recortada del jugador con un resplandor (glow) neón dorado/verde de fondo y su nombre en letras grandes.
+- **Cuerpo Central:** Contenedor con el logo del equipo origen (izquierda), una flecha verde vibrante apuntando al destino, y el logo del equipo de destino (derecha). Debajo de cada escudo se muestra el nombre del equipo correspondiente.
+- **Parte Inferior:** Detalles del contrato (por ejemplo: "12 MESES" o "FICHAJE CONFIRMADO") impreso en negrita sobre un borde difuminado.
+- **Transición suave:** Efecto hover con escalado e incremento de resplandor para una sensación premium e interactiva.
+
+### 8.3 Sincronización Automática al Navegar (Background Auto-Sync)
+Para que los partidos jugados y clasificaciones se actualicen solos sin intervención manual:
+- Se incluirá una llamada asíncrona de `fetch('sync.php?key=5ligas_sync_secret')` en el JS global (`script.js`) al cargar la página.
+- El script de sincronización `sync.php` responderá en milisegundos si la sincronización se ejecutó hace menos de 30 segundos, evitando saturar la API de ESPN y garantizando una velocidad de carga óptima. Si ha pasado más de 30 segundos, se actualizarán los datos de forma silenciosa de fondo.
+
 

@@ -239,19 +239,73 @@ try {
                     <?php else: ?>
                         <?php foreach ($articulos as $art): ?>
                             <?php 
-                            $badge_class = $art['tipo'] === 'pronostico' ? 'badge-pronostico' : 'badge-fichaje';
-                            $label = $art['tipo'] === 'pronostico' ? 'Pronóstico' : 'Fichaje';
-                            $link = $art['tipo'] === 'pronostico' ? "pronosticos.php?slug={$art['slug']}" : "fichajes.php#{$art['slug']}";
+                            $is_visual_card = $art['tipo'] === 'fichaje' && !empty($art['foto_jugador']) && !empty($art['equipo_destino_nombre']);
+                            if ($is_visual_card): 
                             ?>
-                            <div class="news-card">
-                                <span class="news-badge <?php echo $badge_class; ?>"><?php echo $label; ?></span>
-                                <h3 class="news-card-title"><?php echo htmlspecialchars($art['titulo']); ?></h3>
-                                <p class="news-card-excerpt"><?php echo strip_tags($art['contenido']); ?></p>
-                                <div class="news-card-footer">
-                                    <span><?php echo date('d/m/Y', strtotime($art['fecha_creacion'])); ?></span>
-                                    <a href="<?php echo $link; ?>" class="btn-read-more">Leer Más →</a>
+                                <div class="fichaje-visual-card" id="<?php echo htmlspecialchars($art['slug']); ?>" style="margin-bottom: 20px;">
+                                    <span class="visual-badge">MERCADO REAL</span>
+                                    <h3 class="visual-player-name" style="font-size:1.15rem; margin-bottom:12px;"><?php echo htmlspecialchars($art['titulo']); ?></h3>
+                                    
+                                    <div class="visual-player-photo-wrapper" style="width:80px; height:80px; margin-bottom:15px;">
+                                        <img src="<?php echo htmlspecialchars($art['foto_jugador']); ?>" class="visual-player-photo" alt="" onerror="this.src='https://a.espncdn.com/i/headshots/soccer/players/full/default.png';">
+                                    </div>
+                                    
+                                    <div class="visual-transfer-row" style="padding:10px 6px; margin-bottom:15px; gap:10px;">
+                                        <div class="visual-team-column">
+                                            <div style="height: 40px; display: flex; align-items: center; justify-content: center;">
+                                                <?php if (!empty($art['equipo_origen_logo'])): ?>
+                                                    <img src="<?php echo htmlspecialchars($art['equipo_origen_logo']); ?>" class="visual-team-logo-large" style="height:35px; width:35px;" alt="" onerror="this.style.display='none';">
+                                                <?php else: ?>
+                                                    <div style="font-size:1rem;">⚽</div>
+                                                <?php endif; ?>
+                                            </div>
+                                            <span class="visual-team-name-label" style="font-size:0.65rem;"><?php echo htmlspecialchars($art['equipo_origen_nombre'] ?: 'S/E'); ?></span>
+                                        </div>
+                                        
+                                        <div class="visual-arrow-wrapper" style="width:20px; height:20px;">
+                                            <svg class="visual-arrow-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                                                <polyline points="12 5 19 12 12 19"></polyline>
+                                            </svg>
+                                        </div>
+                                        
+                                        <div class="visual-team-column destination">
+                                            <div style="height: 40px; display: flex; align-items: center; justify-content: center;">
+                                                <img src="<?php echo htmlspecialchars($art['equipo_destino_logo']); ?>" class="visual-team-logo-large" style="height:35px; width:35px;" alt="" onerror="this.style.display='none';">
+                                            </div>
+                                            <span class="visual-team-name-label" style="font-size:0.65rem;"><?php echo htmlspecialchars($art['equipo_destino_nombre']); ?></span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="visual-contract-details" style="font-size:0.8rem; padding-top:10px; margin-top:10px;">
+                                        <?php echo htmlspecialchars($art['detalles_contrato'] ?: 'OFICIAL'); ?>
+                                    </div>
+                                    
+                                    <div style="margin-top: 12px; text-align: right; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 10px;">
+                                        <a href="fichajes.php#<?php echo $art['slug']; ?>" class="btn-read-more" style="font-size:0.75rem;">Detalles →</a>
+                                    </div>
                                 </div>
-                            </div>
+                            <?php else: ?>
+                                <?php 
+                                $badge_class = $art['tipo'] === 'pronostico' ? 'badge-pronostico' : 'badge-fichaje';
+                                $label = $art['tipo'] === 'pronostico' ? 'Pronóstico' : 'Fichaje';
+                                $link = $art['tipo'] === 'pronostico' ? "pronosticos.php?slug={$art['slug']}" : "fichajes.php#{$art['slug']}";
+                                ?>
+                                <div class="news-card">
+                                    <span class="news-badge <?php echo $badge_class; ?>"><?php echo $label; ?></span>
+                                    <?php if ($art['tipo'] === 'fichaje' && !empty($art['foto_jugador'])): ?>
+                                        <div style="border-radius:8px; overflow:hidden; margin-bottom:12px; max-height:140px; background:#000;">
+                                            <img src="<?php echo htmlspecialchars($art['foto_jugador']); ?>" style="width:100%; height:100%; object-fit:cover; opacity:0.85;" alt="">
+                                        </div>
+                                    <?php endif; ?>
+                                    <h3 class="news-card-title"><?php echo htmlspecialchars($art['titulo']); ?></h3>
+                                    <p class="news-card-excerpt"><?php echo strip_tags($art['contenido']); ?></p>
+                                    <div class="news-card-footer">
+                                        <span><?php echo date('d/m/Y', strtotime($art['fecha_creacion'])); ?></span>
+                                        <a href="<?php echo $link; ?>" class="btn-read-more">Leer Más →</a>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
                         <?php endforeach; ?>
                     <?php endif; ?>
                 </div>

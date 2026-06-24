@@ -85,6 +85,14 @@ try {
             $slug = trim($_POST['slug'] ?? '');
             $contenido = $_POST['contenido'] ?? '';
             $enlace_afiliado = trim($_POST['enlace_afiliado'] ?? '');
+            
+            // Campos de tarjeta visual (fichajes)
+            $foto_jugador = trim($_POST['foto_jugador'] ?? '');
+            $equipo_origen_nombre = trim($_POST['equipo_origen_nombre'] ?? '');
+            $equipo_origen_logo = trim($_POST['equipo_origen_logo'] ?? '');
+            $equipo_destino_nombre = trim($_POST['equipo_destino_nombre'] ?? '');
+            $equipo_destino_logo = trim($_POST['equipo_destino_logo'] ?? '');
+            $detalles_contrato = trim($_POST['detalles_contrato'] ?? '');
 
             if ($titulo === '' || $contenido === '') {
                 throw new Exception('El título y contenido son obligatorios.');
@@ -105,17 +113,30 @@ try {
             if ($id) {
                 $stmt = $pdo->prepare("
                     UPDATE noticias 
-                    SET tipo = ?, titulo = ?, slug = ?, contenido = ?, enlace_afiliado = ?
+                    SET tipo = ?, titulo = ?, slug = ?, contenido = ?, enlace_afiliado = ?,
+                        foto_jugador = ?, equipo_origen_nombre = ?, equipo_origen_logo = ?,
+                        equipo_destino_nombre = ?, equipo_destino_logo = ?, detalles_contrato = ?
                     WHERE id = ?
                 ");
-                $stmt->execute([$tipo, $titulo, $slug, $contenido, $enlace_afiliado, $id]);
+                $stmt->execute([
+                    $tipo, $titulo, $slug, $contenido, $enlace_afiliado,
+                    $foto_jugador, $equipo_origen_nombre, $equipo_origen_logo,
+                    $equipo_destino_nombre, $equipo_destino_logo, $detalles_contrato,
+                    $id
+                ]);
                 $message = 'Artículo actualizado con éxito.';
             } else {
                 $stmt = $pdo->prepare("
-                    INSERT INTO noticias (tipo, titulo, slug, contenido, enlace_afiliado)
-                    VALUES (?, ?, ?, ?, ?)
+                    INSERT INTO noticias (tipo, titulo, slug, contenido, enlace_afiliado,
+                                          foto_jugador, equipo_origen_nombre, equipo_origen_logo,
+                                          equipo_destino_nombre, equipo_destino_logo, detalles_contrato)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ");
-                $stmt->execute([$tipo, $titulo, $slug, $contenido, $enlace_afiliado]);
+                $stmt->execute([
+                    $tipo, $titulo, $slug, $contenido, $enlace_afiliado,
+                    $foto_jugador, $equipo_origen_nombre, $equipo_origen_logo,
+                    $equipo_destino_nombre, $equipo_destino_logo, $detalles_contrato
+                ]);
                 $message = 'Artículo creado con éxito.';
             }
 

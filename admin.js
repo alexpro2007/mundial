@@ -88,8 +88,27 @@ let newsArticles = [];
 function initNews() {
     const formNews = document.getElementById('form-news');
     const btnCancel = document.getElementById('btn-cancel-edit');
+    const newsTipo = document.getElementById('news-tipo');
+    const transferFields = document.getElementById('transfer-fields-container');
 
     if (!formNews) return;
+
+    // Toggle fields based on article type
+    const toggleTransferFields = () => {
+        if (newsTipo && transferFields) {
+            if (newsTipo.value === 'fichaje') {
+                transferFields.style.display = 'block';
+            } else {
+                transferFields.style.display = 'none';
+            }
+        }
+    };
+
+    if (newsTipo) {
+        newsTipo.addEventListener('change', toggleTransferFields);
+        // Run once initially
+        toggleTransferFields();
+    }
 
     formNews.addEventListener('submit', (e) => {
         e.preventDefault();
@@ -107,6 +126,7 @@ function initNews() {
             if (data.status === 'success') {
                 alert(data.message);
                 formNews.reset();
+                toggleTransferFields();
                 document.getElementById('news-id').value = '';
                 btnCancel.style.display = 'none';
                 loadArticles();
@@ -122,6 +142,7 @@ function initNews() {
 
     btnCancel.addEventListener('click', () => {
         formNews.reset();
+        toggleTransferFields();
         document.getElementById('news-id').value = '';
         btnCancel.style.display = 'none';
     });
@@ -192,6 +213,25 @@ window.editArticle = function(id) {
     document.getElementById('news-slug').value = art.slug;
     document.getElementById('news-contenido').value = art.contenido;
     document.getElementById('news-afiliado').value = art.enlace_afiliado || '';
+
+    // Populate visual transfer card fields
+    document.getElementById('news-foto-jugador').value = art.foto_jugador || '';
+    document.getElementById('news-origen-nombre').value = art.equipo_origen_nombre || '';
+    document.getElementById('news-origen-logo').value = art.equipo_origen_logo || '';
+    document.getElementById('news-destino-nombre').value = art.equipo_destino_nombre || '';
+    document.getElementById('news-destino-logo').value = art.equipo_destino_logo || '';
+    document.getElementById('news-contrato-detalles').value = art.detalles_contrato || '';
+
+    // Toggle fields visibility
+    const newsTipo = document.getElementById('news-tipo');
+    const transferFields = document.getElementById('transfer-fields-container');
+    if (newsTipo && transferFields) {
+        if (newsTipo.value === 'fichaje') {
+            transferFields.style.display = 'block';
+        } else {
+            transferFields.style.display = 'none';
+        }
+    }
 
     document.getElementById('btn-cancel-edit').style.display = 'inline-block';
     

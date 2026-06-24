@@ -329,6 +329,43 @@ if (isset($_SESSION['admin_logged_in']) && empty($_SESSION['csrf_token'])) {
                             </div>
                         </div>
 
+                        <!-- Campos exclusivos para Fichaje (Tarjeta Visual) -->
+                        <div id="transfer-fields-container" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+                            <h4 style="margin-top: 0; margin-bottom: 15px; color: #00f2fe; font-size: 1rem; text-transform: uppercase; letter-spacing: 0.5px;">Detalles de Fichaje (Tarjeta Visual)</h4>
+                            
+                            <div class="form-group">
+                                <label for="news-foto-jugador">URL Foto del Jugador</label>
+                                <input type="url" name="foto_jugador" id="news-foto-jugador" class="form-control" placeholder="https://a.espncdn.com/i/headshots/soccer/players/full/259910.png">
+                            </div>
+
+                            <div style="display: flex; gap: 15px;" class="form-group">
+                                <div style="flex: 1;">
+                                    <label for="news-origen-nombre">Nombre Club de Origen</label>
+                                    <input type="text" name="equipo_origen_nombre" id="news-origen-nombre" class="form-control" placeholder="Ej: Chelsea">
+                                </div>
+                                <div style="flex: 1;">
+                                    <label for="news-origen-logo">URL Logo Club Origen</label>
+                                    <input type="url" name="equipo_origen_logo" id="news-origen-logo" class="form-control" placeholder="https://a.espncdn.com/.../Chelsea.png">
+                                </div>
+                            </div>
+
+                            <div style="display: flex; gap: 15px;" class="form-group">
+                                <div style="flex: 1;">
+                                    <label for="news-destino-nombre">Nombre Club de Destino</label>
+                                    <input type="text" name="equipo_destino_nombre" id="news-destino-nombre" class="form-control" placeholder="Ej: Real Madrid">
+                                </div>
+                                <div style="flex: 1;">
+                                    <label for="news-destino-logo">URL Logo Club Destino</label>
+                                    <input type="url" name="equipo_destino_logo" id="news-destino-logo" class="form-control" placeholder="https://a.espncdn.com/.../RealMadrid.png">
+                                </div>
+                            </div>
+
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label for="news-contrato-detalles">Detalles de Contrato / Traspaso</label>
+                                <input type="text" name="detalles_contrato" id="news-contrato-detalles" class="form-control" placeholder="Ej: Fichaje Confirmado | 5 AÑOS | Cesión | 12 MESES">
+                            </div>
+                        </div>
+
                         <div class="form-group">
                             <label for="news-slug">Slug SEO (URL amigable - se autogenera si se deja vacío)</label>
                             <input type="text" name="slug" id="news-slug" class="form-control" placeholder="Ej: fichaje-mbappe-real-madrid">

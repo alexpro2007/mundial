@@ -7,7 +7,20 @@ document.addEventListener('DOMContentLoaded', () => {
     initCountdown();
     initMatchModal();
     initLiveScores();
+    triggerBackgroundSync();
 });
+
+function triggerBackgroundSync() {
+    // Sincronización automática asíncrona de fondo al cargar la página
+    fetch('sync.php?key=5ligas_sync_secret')
+        .then(res => res.json())
+        .then(data => {
+            console.log("Sincronización automática de fondo completada:", data);
+        })
+        .catch(err => {
+            console.warn("Fallo silencioso en sincronización automática:", err);
+        });
+}
 
 // ------------------------------------------------------------
 // 1. Cuenta Regresiva de Partidos Importantes

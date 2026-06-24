@@ -97,24 +97,99 @@ try {
                         </div>
                     <?php else: ?>
                         <?php foreach ($fichajes as $f): ?>
-                            <div class="fichaje-card" id="<?php echo htmlspecialchars($f['slug']); ?>" style="background:var(--bg-card); border:1px solid var(--border-glass); border-radius:16px; padding:25px; box-shadow:var(--shadow-premium);">
-                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                                    <span class="news-badge badge-fichaje" style="margin-bottom:0;">MERCADO EN VIVO</span>
-                                    <span style="font-size:0.75rem; color:var(--text-secondary);"><?php echo date('d/m/Y H:i', strtotime($f['fecha_creacion'])); ?></span>
-                                </div>
-                                <h3 style="font-size:1.3rem; font-weight:700; color:#ffffff; margin-bottom:12px;"><?php echo htmlspecialchars($f['titulo']); ?></h3>
-                                <div style="font-size:0.95rem; line-height:1.7; color:#cbd5e1; margin-bottom:20px;">
-                                    <?php echo nl2br($f['contenido']); ?>
-                                </div>
-                                <div style="border-top:1px solid rgba(255,255,255,0.05); padding-top:15px; display:flex; justify-content:space-between; align-items:center;">
-                                    <span style="font-size:0.8rem; color:#64748b;">Etiqueta: Rumores de Europa</span>
-                                    <?php if (!empty($f['enlace_afiliado'])): ?>
-                                        <a href="<?php echo htmlspecialchars($f['enlace_afiliado']); ?>" target="_blank" rel="nofollow noopener" style="color:var(--primary-color); font-weight:700; text-decoration:none; font-size:0.85rem;">Enlace Especial de Fichajes →</a>
-                                    <?php else: ?>
-                                        <a href="<?php echo htmlspecialchars($afiliado_camisetas); ?>" target="_blank" rel="nofollow noopener" style="color:var(--primary-color); font-weight:700; text-decoration:none; font-size:0.85rem;">Equipación en Oferta →</a>
+                            <?php 
+                            $is_visual_card = !empty($f['foto_jugador']) && !empty($f['equipo_destino_nombre']);
+                            if ($is_visual_card): 
+                            ?>
+                                <div class="fichaje-visual-card" id="<?php echo htmlspecialchars($f['slug']); ?>">
+                                    <span class="visual-badge">MERCADO REAL</span>
+                                    
+                                    <!-- Player Name/Headline -->
+                                    <h3 class="visual-player-name"><?php echo htmlspecialchars($f['titulo']); ?></h3>
+                                    
+                                    <!-- Player Photo -->
+                                    <div class="visual-player-photo-wrapper">
+                                        <img src="<?php echo htmlspecialchars($f['foto_jugador']); ?>" class="visual-player-photo" alt="<?php echo htmlspecialchars($f['titulo']); ?>" onerror="this.src='https://a.espncdn.com/i/headshots/soccer/players/full/default.png';">
+                                    </div>
+                                    
+                                    <!-- Transfer Details -->
+                                    <div class="visual-transfer-row">
+                                        <!-- Former Club -->
+                                        <div class="visual-team-column">
+                                            <div style="height: 55px; display: flex; align-items: center; justify-content: center;">
+                                                <?php if (!empty($f['equipo_origen_logo'])): ?>
+                                                    <img src="<?php echo htmlspecialchars($f['equipo_origen_logo']); ?>" class="visual-team-logo-large" alt="" onerror="this.style.display='none';">
+                                                <?php else: ?>
+                                                    <div style="font-size:1.5rem;">⚽</div>
+                                                <?php endif; ?>
+                                            </div>
+                                            <span class="visual-team-name-label"><?php echo htmlspecialchars($f['equipo_origen_nombre'] ?: 'S/E'); ?></span>
+                                        </div>
+                                        
+                                        <!-- Arrow -->
+                                        <div class="visual-arrow-wrapper">
+                                            <svg class="visual-arrow-icon" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                                                <polyline points="12 5 19 12 12 19"></polyline>
+                                            </svg>
+                                        </div>
+                                        
+                                        <!-- New Club -->
+                                        <div class="visual-team-column destination">
+                                            <div style="height: 55px; display: flex; align-items: center; justify-content: center;">
+                                                <img src="<?php echo htmlspecialchars($f['equipo_destino_logo']); ?>" class="visual-team-logo-large" alt="" onerror="this.style.display='none';">
+                                            </div>
+                                            <span class="visual-team-name-label"><?php echo htmlspecialchars($f['equipo_destino_nombre']); ?></span>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Contract duration -->
+                                    <div class="visual-contract-details">
+                                        <?php echo htmlspecialchars($f['detalles_contrato'] ?: 'OFICIAL'); ?>
+                                    </div>
+                                    
+                                    <?php if (!empty($f['contenido']) && trim($f['contenido']) !== trim($f['titulo'])): ?>
+                                        <div class="visual-card-description">
+                                            <?php echo nl2br(htmlspecialchars($f['contenido'])); ?>
+                                        </div>
                                     <?php endif; ?>
+                                    
+                                    <!-- Afiliados -->
+                                    <div style="margin-top: 15px; text-align: right; border-top:1px solid rgba(255,255,255,0.05); padding-top:10px;">
+                                        <?php if (!empty($f['enlace_afiliado'])): ?>
+                                            <a href="<?php echo htmlspecialchars($f['enlace_afiliado']); ?>" target="_blank" rel="nofollow noopener" style="color:var(--primary-color); font-weight:700; text-decoration:none; font-size:0.8rem;">Ver noticia original →</a>
+                                        <?php else: ?>
+                                            <a href="<?php echo htmlspecialchars($afiliado_camisetas); ?>" target="_blank" rel="nofollow noopener" style="color:var(--primary-color); font-weight:700; text-decoration:none; font-size:0.8rem;">Equipación oficial →</a>
+                                        <?php endif; ?>
+                                    </div>
                                 </div>
-                            </div>
+                            <?php else: ?>
+                                <!-- Tarjeta Normal (Texto/Imagen simple) -->
+                                <div class="fichaje-card" id="<?php echo htmlspecialchars($f['slug']); ?>" style="background:var(--bg-card); border:1px solid var(--border-glass); border-radius:16px; padding:25px; box-shadow:var(--shadow-premium);">
+                                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                                        <span class="news-badge badge-fichaje" style="margin-bottom:0;">MERCADO EN VIVO</span>
+                                        <span style="font-size:0.75rem; color:var(--text-secondary);"><?php echo date('d/m/Y H:i', strtotime($f['fecha_creacion'])); ?></span>
+                                    </div>
+                                    <?php if (!empty($f['foto_jugador'])): ?>
+                                        <!-- Foto de Noticia a lo ancho si tiene imagen general -->
+                                        <div style="border-radius:12px; overflow:hidden; margin-bottom:15px; max-height:220px;">
+                                            <img src="<?php echo htmlspecialchars($f['foto_jugador']); ?>" style="width:100%; height:100%; object-fit:cover;" alt="">
+                                        </div>
+                                    <?php endif; ?>
+                                    <h3 style="font-size:1.3rem; font-weight:700; color:#ffffff; margin-bottom:12px;"><?php echo htmlspecialchars($f['titulo']); ?></h3>
+                                    <div style="font-size:0.95rem; line-height:1.7; color:#cbd5e1; margin-bottom:20px;">
+                                        <?php echo nl2br($f['contenido']); ?>
+                                    </div>
+                                    <div style="border-top:1px solid rgba(255,255,255,0.05); padding-top:15px; display:flex; justify-content:space-between; align-items:center;">
+                                        <span style="font-size:0.8rem; color:#64748b;">Etiqueta: Rumores de Europa</span>
+                                        <?php if (!empty($f['enlace_afiliado'])): ?>
+                                            <a href="<?php echo htmlspecialchars($f['enlace_afiliado']); ?>" target="_blank" rel="nofollow noopener" style="color:var(--primary-color); font-weight:700; text-decoration:none; font-size:0.85rem;">Enlace Especial de Fichajes →</a>
+                                        <?php else: ?>
+                                            <a href="<?php echo htmlspecialchars($afiliado_camisetas); ?>" target="_blank" rel="nofollow noopener" style="color:var(--primary-color); font-weight:700; text-decoration:none; font-size:0.85rem;">Equipación en Oferta →</a>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
                         <?php endforeach; ?>
                     <?php endif; ?>
                 </div>

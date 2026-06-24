@@ -88,6 +88,12 @@ CREATE TABLE noticias (
     slug VARCHAR(200) UNIQUE NOT NULL,
     contenido LONGTEXT NOT NULL,
     enlace_afiliado TEXT NULL,
+    foto_jugador VARCHAR(255) NULL,
+    equipo_origen_nombre VARCHAR(100) NULL,
+    equipo_origen_logo VARCHAR(255) NULL,
+    equipo_destino_nombre VARCHAR(100) NULL,
+    equipo_destino_logo VARCHAR(255) NULL,
+    detalles_contrato VARCHAR(100) NULL,
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

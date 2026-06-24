@@ -264,6 +264,121 @@ try {
                 $ligas_sincronizadas[] = $liga_nombre;
             }
         }
+
+        // C. Sincronizar Noticias (ESPN News API)
+        $news_url = "https://site.api.espn.com/apis/site/v2/sports/soccer/{$liga_id}/news";
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $news_url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 15);
+        curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)');
+        $json_news = curl_exec($ch);
+        curl_close($ch);
+        
+        if ($json_news) {
+            $news_data = json_decode($json_news, true);
+            if (isset($news_data['articles'])) {
+                foreach ($news_data['articles'] as $art) {
+                    $titulo = trim($art['headline'] ?? '');
+                    if (empty($titulo)) continue;
+                    
+                    // Comprobar si ya existe por título para evitar duplicados
+                    $cStmt = $pdo->prepare("SELECT id FROM noticias WHERE titulo = ?");
+                    $cStmt->execute([$titulo]);
+                    if ($cStmt->fetch()) {
+                        continue;
+                    }
+                    
+                    $contenido = trim($art['description'] ?? $art['story'] ?? '');
+                    if (empty($contenido)) {
+                        $contenido = $titulo;
+                    }
+                    
+                    // Generar slug
+                    $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $titulo)));
+                    $sStmt = $pdo->prepare("SELECT id FROM noticias WHERE slug = ?");
+                    $sStmt->execute([$slug]);
+                    if ($sStmt->fetch()) {
+                        $slug .= '-' . rand(100, 999);
+                    }
+                    
+                    $enlace = $art['links']['web']['href'] ?? '';
+                    $tipo = 'fichaje'; // El feed del portal es de tipo fichaje/rumores
+                    
+                    $foto_jugador = null;
+                    $equipo_origen_nombre = null;
+                    $equipo_origen_logo = null;
+                    $equipo_destino_nombre = null;
+                    $equipo_destino_logo = null;
+                    $detalles_contrato = null;
+                    
+                    $athletes = [];
+                    $teams = [];
+                    
+                    if (isset($art['categories'])) {
+                        foreach ($art['categories'] as $cat) {
+                            if (($cat['type'] ?? '') === 'athlete' && isset($cat['description']) && isset($cat['id'])) {
+                                $athletes[] = [
+                                    'name' => $cat['description'],
+                                    'id' => $cat['id']
+                                ];
+                            } elseif (($cat['type'] ?? '') === 'team' && isset($cat['description']) && isset($cat['teamId'])) {
+                                $teams[] = [
+                                    'name' => $cat['description'],
+                                    'id' => $cat['teamId']
+                                ];
+                            }
+                        }
+                    }
+                    
+                    // Si encontramos atletas, intentamos armar la tarjeta visual
+                    if (!empty($athletes)) {
+                        $player = $athletes[0];
+                        $foto_jugador = "https://a.espncdn.com/i/headshots/soccer/players/full/{$player['id']}.png";
+                        
+                        if (count($teams) === 1) {
+                            $equipo_destino_nombre = $teams[0]['name'];
+                            $equipo_destino_logo = "https://a.espncdn.com/i/teamlogos/soccer/500/{$teams[0]['id']}.png";
+                        } elseif (count($teams) >= 2) {
+                            $equipo_origen_nombre = $teams[0]['name'];
+                            $equipo_origen_logo = "https://a.espncdn.com/i/teamlogos/soccer/500/{$teams[0]['id']}.png";
+                            $equipo_destino_nombre = $teams[1]['name'];
+                            $equipo_destino_logo = "https://a.espncdn.com/i/teamlogos/soccer/500/{$teams[1]['id']}.png";
+                        }
+                        
+                        // Determinar detalles del contrato por palabras clave
+                        $headline_lower = strtolower($titulo);
+                        if (strpos($headline_lower, 'loan') !== false || strpos($headline_lower, 'cedido') !== false || strpos($headline_lower, 'cesión') !== false) {
+                            $detalles_contrato = 'Préstamo / Cesión';
+                        } elseif (strpos($headline_lower, 'official') !== false || strpos($headline_lower, 'hecho') !== false || strpos($headline_lower, 'done') !== false || strpos($headline_lower, 'confirmado') !== false || strpos($headline_lower, 'sign') !== false || strpos($headline_lower, 'ficha') !== false) {
+                            $detalles_contrato = 'Fichaje Confirmado';
+                        } elseif (strpos($headline_lower, 'rumor') !== false || strpos($headline_lower, 'interest') !== false || strpos($headline_lower, 'eye') !== false || strpos($headline_lower, 'look') !== false || strpos($headline_lower, 'busca') !== false || strpos($headline_lower, 'quiere') !== false) {
+                            $detalles_contrato = 'Rumor / Interés';
+                        } else {
+                            $detalles_contrato = 'Mercado';
+                        }
+                    }
+                    
+                    // Si no hay jugador pero la noticia trae una imagen, la guardamos en foto_jugador (para mostrar cabecera con foto)
+                    if (!$foto_jugador && isset($art['images'][0]['url'])) {
+                        $foto_jugador = $art['images'][0]['url'];
+                    }
+                    
+                    // Insertar en la BD
+                    $insNews = $pdo->prepare("
+                        INSERT INTO noticias (tipo, titulo, slug, contenido, enlace_afiliado, 
+                                              foto_jugador, equipo_origen_nombre, equipo_origen_logo, 
+                                              equipo_destino_nombre, equipo_destino_logo, detalles_contrato)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ");
+                    $insNews->execute([
+                        $tipo, $titulo, $slug, $contenido, $enlace,
+                        $foto_jugador, $equipo_origen_nombre, $equipo_origen_logo,
+                        $equipo_destino_nombre, $equipo_destino_logo, $detalles_contrato
+                    ]);
+                }
+            }
+        }
     }
     
     // Recalcular estadísticas agregadas de jugadores
