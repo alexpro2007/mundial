@@ -158,6 +158,29 @@ if ($standings && isset($standings['season']['displayName'])) {
                                     $group_title = $child['name'] ?? '';
                                     $entries = $child['standings']['entries'] ?? [];
                                     if (empty($entries)) continue;
+
+                                    // Sort entries by rank to prevent unsorted standings
+                                    usort($entries, function($a, $b) {
+                                        $rankA = 999;
+                                        $rankB = 999;
+                                        if (isset($a['stats'])) {
+                                            foreach ($a['stats'] as $st) {
+                                                if ($st['name'] === 'rank') {
+                                                    $rankA = intval($st['value']);
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                        if (isset($b['stats'])) {
+                                            foreach ($b['stats'] as $st) {
+                                                if ($st['name'] === 'rank') {
+                                                    $rankB = intval($st['value']);
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                        return $rankA <=> $rankB;
+                                    });
                                 ?>
                                     <?php if ($is_groups_tournament): ?>
                                         <tr class="group-header-row" style="background:rgba(255,215,0,0.04);">
