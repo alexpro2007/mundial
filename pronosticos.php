@@ -1,6 +1,7 @@
 <?php
 // pronosticos.php - Previas de Partidos y Pronósticos de Apuestas (Monetización y SEO)
 require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/lang.php';
 
 $slug = trim($_GET['slug'] ?? '');
 
@@ -46,16 +47,16 @@ if (!$articulo) {
 }
 ?>
 <!DOCTYPE html>
-<html lang="es">
+<html lang="<?php echo htmlspecialchars($current_lang); ?>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <?php if ($articulo): ?>
-        <title><?php echo htmlspecialchars($articulo['titulo']); ?> - Pronósticos de Fútbol</title>
+        <title><?php echo htmlspecialchars($articulo['titulo']); ?> - <?php echo htmlspecialchars(__('predictions')); ?></title>
         <meta name="description" content="<?php echo htmlspecialchars(mb_substr(strip_tags($articulo['contenido']), 0, 150) . '...'); ?>">
     <?php else: ?>
-        <title>Pronósticos de Fútbol y Previas de Apuestas - 5 Grandes Ligas</title>
-        <meta name="description" content="Análisis deportivos y consejos de apuestas de fútbol para las 5 grandes ligas de Europa. Las mejores cuotas del mercado con enlaces seguros de afiliado.">
+        <title><?php echo htmlspecialchars(__('pronosticos_meta_title')); ?></title>
+        <meta name="description" content="<?php echo htmlspecialchars(__('pronosticos_meta_desc')); ?>">
     <?php endif; ?>
     <link rel="stylesheet" href="style.css?v=<?php echo time(); ?>">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&display=swap" rel="stylesheet">
@@ -75,15 +76,16 @@ if (!$articulo) {
             </a>
             
             <nav class="main-nav">
-                <a href="index.php" class="nav-btn" style="text-decoration:none;">Inicio</a>
+                <a href="index.php" class="nav-btn" style="text-decoration:none;"><?php echo htmlspecialchars(__('nav_inicio')); ?></a>
                 <a href="liga.php?id=esp.1" class="nav-btn" style="text-decoration:none;">LaLiga</a>
                 <a href="liga.php?id=eng.1" class="nav-btn" style="text-decoration:none;">Premier</a>
                 <a href="liga.php?id=ita.1" class="nav-btn" style="text-decoration:none;">Serie A</a>
                 <a href="liga.php?id=ger.1" class="nav-btn" style="text-decoration:none;">Bundesliga</a>
                 <a href="liga.php?id=fra.1" class="nav-btn" style="text-decoration:none;">Ligue 1</a>
-                <a href="liga.php?id=fifa.world" class="nav-btn" style="text-decoration:none;">Mundial</a>
-                <a href="fichajes.php" class="nav-btn" style="text-decoration:none;">Fichajes</a>
+                <a href="liga.php?id=fifa.world" class="nav-btn" style="text-decoration:none;"><?php echo htmlspecialchars(__('nav_mundial')); ?></a>
+                <a href="fichajes.php" class="nav-btn" style="text-decoration:none;"><?php echo htmlspecialchars(__('nav_fichajes')); ?></a>
             </nav>
+            <?php renderLanguageSelector(); ?>
         </div>
     </header>
 
@@ -101,13 +103,13 @@ if (!$articulo) {
                 <?php if ($articulo): ?>
                     <!-- VISTA: LECTURA DE UN PRONÓSTICO ESPECÍFICO -->
                     <article class="news-detail-card" style="background:var(--bg-card); border:1px solid var(--border-glass); border-radius:16px; padding:30px; box-shadow:var(--shadow-premium);">
-                        <span class="news-badge badge-pronostico" style="margin-bottom:15px;">PRONÓSTICO Y APUESTA</span>
+                        <span class="news-badge badge-pronostico" style="margin-bottom:15px;"><?php echo htmlspecialchars(__('prediction_badge_long')); ?></span>
                         
                         <h1 style="font-size:2rem; font-weight:800; color:#ffffff; margin-bottom:15px; line-height:1.3;"><?php echo htmlspecialchars($articulo['titulo']); ?></h1>
                         
                         <div style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:25px; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:15px; display:flex; gap:15px;">
-                            <span>Fecha de publicación: <?php echo date('d/m/Y H:i', strtotime($articulo['fecha_creacion'])); ?></span>
-                            <span>Autor: Redacción Deportes</span>
+                            <span><?php echo htmlspecialchars(__('pub_date')); ?> <?php echo date('d/m/Y H:i', strtotime($articulo['fecha_creacion'])); ?></span>
+                            <span><?php echo htmlspecialchars(__('author_staff')); ?></span>
                         </div>
                         
                         <!-- Contenido enriquecido -->
@@ -117,59 +119,59 @@ if (!$articulo) {
 
                         <!-- Widget de Apuestas integrado dentro de la lectura para máxima conversión -->
                         <div class="betting-widget" style="margin-top: 40px; border-color: var(--primary-color);">
-                            <span class="betting-widget-title">💰 CUOTAS RECOMENDADAS PARA ESTE PARTIDO</span>
+                            <span class="betting-widget-title"><?php echo htmlspecialchars(__('odds_recommended_title')); ?></span>
                             <div class="betting-teams" style="margin-bottom:15px;">
                                 <span style="font-weight:700; font-size:1.1rem;"><?php echo htmlspecialchars($articulo['titulo']); ?></span>
                             </div>
                             <div class="betting-odds-row">
                                 <div class="bet-option">
-                                    <span class="bet-label">Local gana</span>
+                                    <span class="bet-label"><?php echo htmlspecialchars(__('home_win')); ?></span>
                                     <span class="bet-value">2.10</span>
                                 </div>
                                 <div class="bet-option">
-                                    <span class="bet-label">Empate</span>
+                                    <span class="bet-label"><?php echo htmlspecialchars(__('draw')); ?></span>
                                     <span class="bet-value">3.40</span>
                                 </div>
                                 <div class="bet-option">
-                                    <span class="bet-label">Visitante gana</span>
+                                    <span class="bet-label"><?php echo htmlspecialchars(__('away_win')); ?></span>
                                     <span class="bet-value">3.20</span>
                                 </div>
                             </div>
-                            <a href="<?php echo htmlspecialchars($afiliado_apuestas); ?>" target="_blank" rel="nofollow noopener" class="btn-bet-now">Apostar con Enlace de Afiliado →</a>
+                            <a href="<?php echo htmlspecialchars($afiliado_apuestas); ?>" target="_blank" rel="nofollow noopener" class="btn-bet-now"><?php echo htmlspecialchars(__('bet_affiliate_link')); ?></a>
                         </div>
                     </article>
 
                     <div style="margin-top:30px;">
                         <a href="pronosticos.php" style="color:var(--primary-color); text-decoration:none; font-weight:700; display:flex; align-items:center; gap:6px;">
-                            ← Volver a todos los pronósticos
+                            <?php echo htmlspecialchars(__('back_to_predictions')); ?>
                         </a>
                     </div>
 
                 <?php else: ?>
                     <!-- VISTA: DIRECTORIO DE PRONÓSTICOS Y ANÁLISIS (Para SEO) -->
-                    <h1 style="font-size:1.8rem; font-weight:800; color:#ffffff; margin-bottom:10px;">Pronósticos de Apuestas y Previas de Fútbol</h1>
-                    <p style="color:var(--text-secondary); margin-bottom:30px;">Lee nuestros análisis tácticos exhaustivos de los partidos más importantes de las ligas europeas y encuentra las mejores oportunidades de apuesta.</p>
+                    <h1 style="font-size:1.8rem; font-weight:800; color:#ffffff; margin-bottom:10px;"><?php echo htmlspecialchars(__('pronosticos_h1')); ?></h1>
+                    <p style="color:var(--text-secondary); margin-bottom:30px;"><?php echo htmlspecialchars(__('pronosticos_subtitle')); ?></p>
                     
                     <div class="news-grid">
                         <?php if (empty($pronosticos_recientes)): ?>
                             <div class="news-card">
-                                <span class="news-badge badge-pronostico">Pronóstico</span>
-                                <h3 class="news-card-title">Real Madrid vs Barcelona: Pronóstico, apuestas y previa de El Clásico</h3>
-                                <p class="news-card-excerpt">Analizamos el gran duelo de LaLiga en el Santiago Bernabéu. Claves tácticas, bajas de última hora y las mejores cuotas de afiliado para apostar seguro.</p>
+                                <span class="news-badge badge-pronostico"><?php echo htmlspecialchars(__('prediction_badge')); ?></span>
+                                <h3 class="news-card-title"><?php echo htmlspecialchars(__('mock_prediction_title')); ?></h3>
+                                <p class="news-card-excerpt"><?php echo htmlspecialchars(__('mock_prediction_desc')); ?></p>
                                 <div class="news-card-footer">
-                                    <span>Ejemplo Inicial</span>
-                                    <a href="pronosticos.php?slug=ejemplo-real-madrid-vs-barcelona" class="btn-read-more">Previa y Cuotas →</a>
+                                    <span><?php echo htmlspecialchars(__('mock_prediction_date')); ?></span>
+                                    <a href="pronosticos.php?slug=ejemplo-real-madrid-vs-barcelona" class="btn-read-more"><?php echo htmlspecialchars(__('previa_and_odds')); ?></a>
                                 </div>
                             </div>
                         <?php else: ?>
                             <?php foreach ($pronosticos_recientes as $art): ?>
                                 <div class="news-card">
-                                    <span class="news-badge badge-pronostico">Pronóstico</span>
+                                    <span class="news-badge badge-pronostico"><?php echo htmlspecialchars(__('prediction_badge')); ?></span>
                                     <h3 class="news-card-title"><?php echo htmlspecialchars($art['titulo']); ?></h3>
                                     <p class="news-card-excerpt"><?php echo strip_tags($art['contenido']); ?></p>
                                     <div class="news-card-footer">
                                         <span><?php echo date('d/m/Y', strtotime($art['fecha_creacion'])); ?></span>
-                                        <a href="pronosticos.php?slug=<?php echo $art['slug']; ?>" class="btn-read-more">Previa y Cuotas →</a>
+                                        <a href="pronosticos.php?slug=<?php echo $art['slug']; ?>" class="btn-read-more"><?php echo htmlspecialchars(__('previa_and_odds')); ?></a>
                                     </div>
                                 </div>
                             <?php endforeach; ?>
@@ -190,15 +192,14 @@ if (!$articulo) {
 
                     <!-- Enlace Afiliado Apuestas Widget -->
                     <div class="betting-widget">
-                        <span class="betting-widget-title">🔥 REGISTRO EXCLUSIVO</span>
-                        <p style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:15px;">Regístrate a través de nuestro enlace de afiliado en la casa líder de apuestas deportivas y obtén un bono de bienvenida especial del 100% de tu primer depósito.</p>
-                        <a href="<?php echo htmlspecialchars($afiliado_apuestas); ?>" target="_blank" rel="nofollow noopener" class="btn-bet-now">Reclamar Bono Exclusivo</a>
+                        <span class="betting-widget-title"><?php echo htmlspecialchars(__('sidebar_promo_title')); ?></span>
+                        <p style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:15px;"><?php echo htmlspecialchars(__('sidebar_promo_desc')); ?></p>
+                        <a href="<?php echo htmlspecialchars($afiliado_apuestas); ?>" target="_blank" rel="nofollow noopener" class="btn-bet-now"><?php echo htmlspecialchars(__('sidebar_promo_button')); ?></a>
                     </div>
                     
                     <!-- Juego Responsable -->
                     <div style="font-size:0.7rem; color:#64748b; text-align:center; padding:15px; border-radius:10px; background:rgba(255,255,255,0.01); border:1px solid rgba(255,255,255,0.03);">
-                        🔞 <strong>JUEGA CON RESPONSABILIDAD</strong><br>
-                        Apuesta solo el dinero que puedas permitirte perder. Si crees que tienes problemas con el juego, solicita ayuda.
+                        <?php echo __('sidebar_responsible_gaming'); ?>
                     </div>
                 </div>
             </div>
@@ -208,10 +209,11 @@ if (!$articulo) {
 
     <!-- Footer -->
     <footer style="text-align:center; padding:40px 20px; border-top:1px solid var(--border-glass); margin-top:60px; color:#64748b; font-size:0.85rem;">
-        <p>&copy; <?php echo date('Y'); ?> 5 Ligas Europa. Todos los derechos reservados.</p>
-        <p style="margin-top:10px; font-size:0.75rem;">🔞 +18 Jugar con responsabilidad. Los contenidos de esta web son de carácter analítico y de opinión deportiva.</p>
+        <p>&copy; <?php echo date('Y'); ?> 5 Ligas Europa. <?php echo htmlspecialchars(__('footer_rights')); ?></p>
+        <p style="margin-top:10px; font-size:0.75rem;"><?php echo htmlspecialchars(__('footer_pronosticos_disclaimer')); ?></p>
     </footer>
 
+    <?php renderJSTranslations(); ?>
     <script src="script.js?v=<?php echo time(); ?>"></script>
 </body>
 </html>

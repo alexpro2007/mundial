@@ -1321,6 +1321,10 @@ main {
     animation: fadeInModal 0.3s ease;
 }
 
+.modal.active {
+    display: block;
+}
+
 @keyframes fadeInModal {
     from { opacity: 0; }
     to { opacity: 1; }
@@ -2027,5 +2031,90 @@ main {
     padding: 12px;
     border-radius: 10px;
     border: 1px solid rgba(255, 255, 255, 0.02);
+}
+
+/* Selector de Idiomas Premium */
+.lang-selector-container {
+    display: flex;
+    align-items: center;
+    margin-left: 15px;
+}
+
+.lang-select {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border-glass);
+    color: var(--text-primary);
+    font-family: var(--font-main);
+    font-size: 0.85rem;
+    font-weight: 700;
+    padding: 8px 16px;
+    border-radius: 12px;
+    cursor: pointer;
+    outline: none;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: inset 0 2px 4px rgba(255,255,255,0.02), var(--shadow-premium);
+}
+
+.lang-select:hover {
+    background: var(--bg-hover);
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+.lang-select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 12px var(--glow-primary);
+}
+
+.lang-select option {
+    background-color: #0d131f;
+    color: var(--text-primary);
+    font-weight: 600;
+    padding: 10px;
+}
+
+@media (max-width: 900px) {
+    .nav-container {
+        flex-direction: column;
+        gap: 15px;
+    }
+    .lang-selector-container {
+        margin-left: 0;
+        margin-top: 5px;
+    }
+}
+
+/* Eventos en la ventana modal de detalles */
+.modal-events-container {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    margin-top: 30px;
+}
+
+.modal-events-column {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.modal-separator {
+    width: 1px;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.modal-events-column .event-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    border-radius: 10px;
+    font-size: 0.9rem;
+}
+
+.modal-events-column .event-row.visitor-event {
+    flex-direction: row-reverse;
 }
 

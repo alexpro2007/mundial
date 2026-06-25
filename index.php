@@ -1,6 +1,7 @@
 <?php
 // index.php - Vista Principal (Dashboard) del Portal de las 5 Grandes Ligas
 require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/lang.php';
 
 // Cargar configuración de monetización
 $banner_header = '<div class="banner-placeholder">PUBLICIDAD SUPERIOR (728x90)</div>';
@@ -70,7 +71,7 @@ try {
 }
 ?>
 <!DOCTYPE html>
-<html lang="es">
+<html lang="<?php echo htmlspecialchars($current_lang); ?>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -94,15 +95,16 @@ try {
             </a>
             
             <nav class="main-nav">
-                <a href="index.php" class="nav-btn active" style="text-decoration:none;">Inicio</a>
+                <a href="index.php" class="nav-btn active" style="text-decoration:none;"><?php echo htmlspecialchars(__('nav_inicio')); ?></a>
                 <a href="liga.php?id=esp.1" class="nav-btn" style="text-decoration:none;">LaLiga</a>
                 <a href="liga.php?id=eng.1" class="nav-btn" style="text-decoration:none;">Premier</a>
                 <a href="liga.php?id=ita.1" class="nav-btn" style="text-decoration:none;">Serie A</a>
                 <a href="liga.php?id=ger.1" class="nav-btn" style="text-decoration:none;">Bundesliga</a>
                 <a href="liga.php?id=fra.1" class="nav-btn" style="text-decoration:none;">Ligue 1</a>
-                <a href="liga.php?id=fifa.world" class="nav-btn" style="text-decoration:none;">Mundial</a>
-                <a href="fichajes.php" class="nav-btn" style="text-decoration:none;">Fichajes</a>
+                <a href="liga.php?id=fifa.world" class="nav-btn" style="text-decoration:none;"><?php echo htmlspecialchars(__('nav_mundial')); ?></a>
+                <a href="fichajes.php" class="nav-btn" style="text-decoration:none;"><?php echo htmlspecialchars(__('nav_fichajes')); ?></a>
             </nav>
+            <?php renderLanguageSelector(); ?>
         </div>
     </header>
 
@@ -122,27 +124,27 @@ try {
                 <div class="countdown-glow-wrapper" style="margin-bottom: 30px;">
                     <div class="countdown-container-large">
                         <div class="countdown-title-large">
-                            <span class="live-dot-indicator"></span> CUENTA ATRÁS PARA EL PRÓXIMO PARTIDO
+                            <span class="live-dot-indicator"></span> <?php echo htmlspecialchars(__('countdown_title')); ?>
                         </div>
                         <div class="timer-large">
                             <div class="time-block-large">
                                 <span class="time-num" id="cd-days">00</span>
-                                <span class="time-label">Días</span>
+                                <span class="time-label"><?php echo htmlspecialchars(__('days')); ?></span>
                             </div>
                             <div class="timer-separator">:</div>
                             <div class="time-block-large">
                                 <span class="time-num" id="cd-hours">00</span>
-                                <span class="time-label">Horas</span>
+                                <span class="time-label"><?php echo htmlspecialchars(__('hours')); ?></span>
                             </div>
                             <div class="timer-separator">:</div>
                             <div class="time-block-large">
                                 <span class="time-num" id="cd-mins">00</span>
-                                <span class="time-label">Minutos</span>
+                                <span class="time-label"><?php echo htmlspecialchars(__('mins')); ?></span>
                             </div>
                             <div class="timer-separator">:</div>
                             <div class="time-block-large">
                                 <span class="time-num" id="cd-secs">00</span>
-                                <span class="time-label">Segundos</span>
+                                <span class="time-label"><?php echo htmlspecialchars(__('secs')); ?></span>
                             </div>
                         </div>
                     </div>
@@ -150,7 +152,7 @@ try {
 
                 <!-- Partidos en Vivo (Si los hay) -->
                 <?php if (!empty($partidos_live)): ?>
-                    <h2 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 20px; border-left: 4px solid var(--accent-live); padding-left: 10px;">PARTIDOS EN VIVO</h2>
+                    <h2 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 20px; border-left: 4px solid var(--accent-live); padding-left: 10px;"><?php echo htmlspecialchars(__('live_matches')); ?></h2>
                     <div class="matches-grid" style="display:flex; flex-direction:column; gap:15px; margin-bottom: 40px;">
                         <?php foreach ($partidos_live as $p): ?>
                             <div class="match-card-clickable" data-match-id="<?php echo $p['id']; ?>" style="cursor:pointer; background:rgba(16, 24, 40, 0.7); border:1px solid rgba(16, 185, 129, 0.3); border-radius:12px; padding:15px; display:flex; justify-content:space-between; align-items:center;">
@@ -173,19 +175,19 @@ try {
                 <?php endif; ?>
 
                 <!-- Agenda de Partidos y Resultados Recientes -->
-                <h2 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 20px; border-left: 4px solid var(--accent-blue); padding-left: 10px;">PARTIDOS DESTACADOS</h2>
+                <h2 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 20px; border-left: 4px solid var(--accent-blue); padding-left: 10px;"><?php echo htmlspecialchars(__('upcoming_matches')); ?></h2>
                 <div class="matches-list-container" style="display:flex; flex-direction:column; gap:15px; margin-bottom: 40px;">
                     <?php if (empty($partidos_upcoming)): ?>
-                        <div style="color:var(--text-secondary); text-align:center; padding:20px;">No hay partidos cargados actualmente. Por favor sincroniza desde el panel administrativo.</div>
+                        <div style="color:var(--text-secondary); text-align:center; padding:20px;"><?php echo htmlspecialchars(__('no_data')); ?></div>
                     <?php else: ?>
                         <?php foreach ($partidos_upcoming as $p): ?>
                             <?php 
-                            $dateObj = new DateTIme($p['fecha_hora']);
+                            $dateObj = new DateTime($p['fecha_hora']);
                             $state_label = '';
                             if ($p['estado'] === 'pendiente') {
                                 $state_label = $dateObj->format('d/m H:i');
                             } elseif ($p['estado'] === 'finalizado') {
-                                $state_label = 'Finalizado';
+                                $state_label = __('finished');
                             }
                             ?>
                             <div class="match-card-clickable" data-match-id="<?php echo $p['id']; ?>" style="cursor:pointer; background:rgba(255, 255, 255, 0.02); border:1px solid var(--border-glass); border-radius:12px; padding:15px; display:flex; justify-content:space-between; align-items:center;">
@@ -214,26 +216,26 @@ try {
                 </div>
 
                 <!-- Sección de Noticias / Previa y Pronósticos -->
-                <h2 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 20px; border-left: 4px solid var(--primary-color); padding-left: 10px;">ANÁLISIS Y PRONÓSTICOS DESTACADOS</h2>
+                <h2 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 20px; border-left: 4px solid var(--primary-color); padding-left: 10px;"><?php echo htmlspecialchars(__('latest_news')); ?></h2>
                 <div class="news-grid">
                     <?php if (empty($articulos)): ?>
                         <!-- Plantillas mock de SEO y afiliados si no hay noticias insertadas todavía -->
                         <div class="news-card">
-                            <span class="news-badge badge-pronostico">Pronóstico</span>
+                            <span class="news-badge badge-pronostico"><?php echo htmlspecialchars(__('predictions')); ?></span>
                             <h3 class="news-card-title">Real Madrid vs Barcelona: Pronóstico, apuestas y previa de El Clásico</h3>
                             <p class="news-card-excerpt">Analizamos el gran duelo de LaLiga en el Santiago Bernabéu. Claves tácticas, bajas de última hora y las mejores cuotas de afiliado para apostar seguro.</p>
                             <div class="news-card-footer">
                                 <span>Hace 1 día</span>
-                                <a href="pronosticos.php" class="btn-read-more">Previa y Cuotas →</a>
+                                <a href="pronosticos.php" class="btn-read-more"><?php echo htmlspecialchars(__('read_more')); ?> →</a>
                             </div>
                         </div>
                         <div class="news-card">
-                            <span class="news-badge badge-fichaje">Fichaje</span>
+                            <span class="news-badge badge-fichaje"><?php echo htmlspecialchars(__('nav_fichajes')); ?></span>
                             <h3 class="news-card-title">Mercado en vivo: Rumores de traspasos, altas y bajas de las grandes ligas</h3>
                             <p class="news-card-excerpt">Entérate de las últimas novedades sobre los fichajes más sonados de la Premier League, LaLiga y Serie A. Última hora directo del mercado europeo.</p>
                             <div class="news-card-footer">
                                 <span>Hace 2 horas</span>
-                                <a href="fichajes.php" class="btn-read-more">Ver Fichajes →</a>
+                                <a href="fichajes.php" class="btn-read-more"><?php echo htmlspecialchars(__('view_all')); ?> →</a>
                             </div>
                         </div>
                     <?php else: ?>
@@ -288,7 +290,7 @@ try {
                             <?php else: ?>
                                 <?php 
                                 $badge_class = $art['tipo'] === 'pronostico' ? 'badge-pronostico' : 'badge-fichaje';
-                                $label = $art['tipo'] === 'pronostico' ? 'Pronóstico' : 'Fichaje';
+                                $label = $art['tipo'] === 'pronostico' ? __('predictions') : __('nav_fichajes');
                                 $link = $art['tipo'] === 'pronostico' ? "pronosticos.php?slug={$art['slug']}" : "fichajes.php#{$art['slug']}";
                                 ?>
                                 <div class="news-card">
@@ -302,7 +304,7 @@ try {
                                     <p class="news-card-excerpt"><?php echo strip_tags($art['contenido']); ?></p>
                                     <div class="news-card-footer">
                                         <span><?php echo date('d/m/Y', strtotime($art['fecha_creacion'])); ?></span>
-                                        <a href="<?php echo $link; ?>" class="btn-read-more">Leer Más →</a>
+                                        <a href="<?php echo $link; ?>" class="btn-read-more"><?php echo htmlspecialchars(__('read_more')); ?> →</a>
                                     </div>
                                 </div>
                             <?php endif; ?>
@@ -323,39 +325,38 @@ try {
 
                     <!-- Caja de Afiliado para apostar destacado -->
                     <div class="betting-widget">
-                        <span class="betting-widget-title">🔥 APUESTA DE LA JORNADA</span>
+                        <span class="betting-widget-title">🔥 <?php echo htmlspecialchars(strtoupper(__('predictions'))); ?></span>
                         <div class="betting-teams">
-                            <span style="font-weight:700;">Top Partido Europeo</span>
-                            <span style="color:var(--primary-color); font-weight:800; font-size:0.75rem; background:rgba(255,215,0,0.1); padding:2px 6px; border-radius:4px;">100% SEGURO</span>
+                            <span style="font-weight:700;"><?php echo htmlspecialchars(__('top_european_match')); ?></span>
+                            <span style="color:var(--primary-color); font-weight:800; font-size:0.75rem; background:rgba(255,215,0,0.1); padding:2px 6px; border-radius:4px;"><?php echo htmlspecialchars(__('safe_100')); ?></span>
                         </div>
                         <div class="betting-odds-row">
                             <div class="bet-option">
-                                <span class="bet-label">Local</span>
+                                <span class="bet-label"><?php echo htmlspecialchars(__('home')); ?></span>
                                 <span class="bet-value">2.15</span>
                             </div>
                             <div class="bet-option">
-                                <span class="bet-label">Empate</span>
+                                <span class="bet-label"><?php echo htmlspecialchars(__('draw_label')); ?></span>
                                 <span class="bet-value">3.40</span>
                             </div>
                             <div class="bet-option">
-                                <span class="bet-label">Visita</span>
+                                <span class="bet-label"><?php echo htmlspecialchars(__('away')); ?></span>
                                 <span class="bet-value">3.10</span>
                             </div>
                         </div>
-                        <a href="<?php echo htmlspecialchars($afiliado_apuestas); ?>" target="_blank" rel="nofollow noopener" class="btn-bet-now">Apostar con Bono →</a>
+                        <a href="<?php echo htmlspecialchars($afiliado_apuestas); ?>" target="_blank" rel="nofollow noopener" class="btn-bet-now"><?php echo htmlspecialchars(__('bet_now')); ?> →</a>
                     </div>
 
                     <!-- Enlace a Tienda / Camisetas -->
                     <div class="betting-widget" style="border-color: rgba(14, 165, 233, 0.2);">
-                        <span class="betting-widget-title" style="color: var(--accent-blue);">🛒 TIENDA DE FÚTBOL</span>
-                        <p style="font-size:0.8rem; color:var(--text-secondary); margin-bottom: 15px;">Consigue las camisetas oficiales de tus equipos favoritos de las 5 grandes ligas de Europa con descuentos increíbles de hasta el 30%.</p>
-                        <a href="<?php echo htmlspecialchars($afiliado_camisetas); ?>" target="_blank" rel="nofollow noopener" class="btn-bet-now" style="background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); color:#ffffff; box-shadow: 0 4px 15px rgba(14, 165, 233, 0.2);">Ver Camisetas en Oferta</a>
+                        <span class="betting-widget-title" style="color: var(--accent-blue);">🛒 <?php echo htmlspecialchars(__('football_shop')); ?></span>
+                        <p style="font-size:0.8rem; color:var(--text-secondary); margin-bottom: 15px;"><?php echo htmlspecialchars(__('shop_desc')); ?></p>
+                        <a href="<?php echo htmlspecialchars($afiliado_camisetas); ?>" target="_blank" rel="nofollow noopener" class="btn-bet-now" style="background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); color:#ffffff; box-shadow: 0 4px 15px rgba(14, 165, 233, 0.2);"><?php echo htmlspecialchars(__('buy_shirt')); ?></a>
                     </div>
 
                     <!-- Juego Responsable -->
                     <div style="font-size:0.7rem; color:#64748b; text-align:center; padding:15px; border-radius:10px; background:rgba(255,255,255,0.01); border:1px solid rgba(255,255,255,0.03);">
-                        🔞 <strong>+18 JUEGO RESPONSABLE</strong><br>
-                        Las apuestas deportivas conllevan riesgos financieros. Juega con moderación y bajo tu propia responsabilidad.
+                        <?php echo __('responsible_gaming_index'); ?>
                     </div>
                 </div>
             </div>
@@ -365,10 +366,11 @@ try {
 
     <!-- Footer -->
     <footer style="text-align:center; padding:40px 20px; border-top:1px solid var(--border-glass); margin-top:60px; color:#64748b; font-size:0.85rem;">
-        <p>&copy; <?php echo date('Y'); ?> 5 Ligas Europa. Todos los derechos reservados.</p>
-        <p style="margin-top:10px; font-size:0.75rem;">Diseñado con fines informativos y optimización SEO. Datos en vivo provistos por ESPN API. Todos los enlaces comerciales contienen etiquetas de afiliado.</p>
+        <p>&copy; <?php echo date('Y'); ?> 5 Ligas Europa. <?php echo htmlspecialchars(__('footer_rights')); ?></p>
+        <p style="margin-top:10px; font-size:0.75rem;"><?php echo __('footer_note_index'); ?></p>
     </footer>
 
+    <?php renderJSTranslations(); ?>
     <script src="script.js?v=<?php echo time(); ?>"></script>
 </body>
 </html>

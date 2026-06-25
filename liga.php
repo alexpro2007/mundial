@@ -1,6 +1,7 @@
 <?php
 // liga.php - Vista Detallada de una Liga Europea
 require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/lang.php';
 
 $liga_id = $_GET['id'] ?? 'esp.1';
 
@@ -71,7 +72,7 @@ if ($standings && isset($standings['season']['displayName'])) {
 }
 ?>
 <!DOCTYPE html>
-<html lang="es">
+<html lang="<?php echo htmlspecialchars($current_lang); ?>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -95,15 +96,16 @@ if ($standings && isset($standings['season']['displayName'])) {
             </a>
             
             <nav class="main-nav">
-                <a href="index.php" class="nav-btn" style="text-decoration:none;">Inicio</a>
+                <a href="index.php" class="nav-btn" style="text-decoration:none;"><?php echo htmlspecialchars(__('nav_inicio')); ?></a>
                 <a href="liga.php?id=esp.1" class="nav-btn <?php echo $liga_id === 'esp.1' ? 'active' : ''; ?>" style="text-decoration:none;">LaLiga</a>
                 <a href="liga.php?id=eng.1" class="nav-btn <?php echo $liga_id === 'eng.1' ? 'active' : ''; ?>" style="text-decoration:none;">Premier</a>
                 <a href="liga.php?id=ita.1" class="nav-btn <?php echo $liga_id === 'ita.1' ? 'active' : ''; ?>" style="text-decoration:none;">Serie A</a>
                 <a href="liga.php?id=ger.1" class="nav-btn <?php echo $liga_id === 'ger.1' ? 'active' : ''; ?>" style="text-decoration:none;">Bundesliga</a>
                 <a href="liga.php?id=fra.1" class="nav-btn <?php echo $liga_id === 'fra.1' ? 'active' : ''; ?>" style="text-decoration:none;">Ligue 1</a>
-                <a href="liga.php?id=fifa.world" class="nav-btn <?php echo $liga_id === 'fifa.world' ? 'active' : ''; ?>" style="text-decoration:none;">Mundial</a>
-                <a href="fichajes.php" class="nav-btn" style="text-decoration:none;">Fichajes</a>
+                <a href="liga.php?id=fifa.world" class="nav-btn <?php echo $liga_id === 'fifa.world' ? 'active' : ''; ?>" style="text-decoration:none;"><?php echo htmlspecialchars(__('nav_mundial')); ?></a>
+                <a href="fichajes.php" class="nav-btn" style="text-decoration:none;"><?php echo htmlspecialchars(__('nav_fichajes')); ?></a>
             </nav>
+            <?php renderLanguageSelector(); ?>
         </div>
     </header>
 
@@ -117,7 +119,7 @@ if ($standings && isset($standings['season']['displayName'])) {
             <img src="<?php echo htmlspecialchars($liga['logo_url']); ?>" style="height:80px; object-fit:contain;" alt="">
             <div>
                 <h1 style="margin:0; font-size:2rem; font-weight:800; color:#ffffff;"><?php echo htmlspecialchars($season_displayName); ?></h1>
-                <span style="font-size:1rem; color:var(--text-secondary);"><?php echo htmlspecialchars($liga['pais']); ?> | Datos Oficiales ESPN</span>
+                <span style="font-size:1rem; color:var(--text-secondary);"><?php echo htmlspecialchars($liga['pais']); ?> | <?php echo htmlspecialchars(__('official_data')); ?></span>
             </div>
         </div>
 
@@ -127,24 +129,24 @@ if ($standings && isset($standings['season']['displayName'])) {
             <div class="main-content">
                 
                 <!-- Tabla de Posiciones Cached -->
-                <h2 style="font-size: 1.4rem; font-weight: 800; margin-bottom: 20px; border-left: 4px solid var(--primary-color); padding-left: 10px;">TABLA DE CLASIFICACIÓN</h2>
+                <h2 style="font-size: 1.4rem; font-weight: 800; margin-bottom: 20px; border-left: 4px solid var(--primary-color); padding-left: 10px;"><?php echo htmlspecialchars(__('standings_title')); ?></h2>
                 <div class="standings-table-wrapper" style="margin-bottom: 40px;">
                     <?php if (!$standings || !isset($standings['children'])): ?>
-                        <div style="color:var(--text-secondary); text-align:center; padding:20px;">No hay datos de clasificación sincronizados actualmente. Por favor sincroniza desde el panel administrativo.</div>
+                        <div style="color:var(--text-secondary); text-align:center; padding:20px;"><?php echo htmlspecialchars(__('no_data')); ?></div>
                     <?php else: ?>
                         <table class="standings-table">
                             <thead>
                                 <tr>
-                                    <th class="standings-rank">#</th>
-                                    <th>Equipo</th>
-                                    <th style="text-align:center;">PJ</th>
-                                    <th style="text-align:center;">G</th>
-                                    <th style="text-align:center;">E</th>
-                                    <th style="text-align:center;">P</th>
-                                    <th style="text-align:center;">GF</th>
-                                    <th style="text-align:center;">GC</th>
-                                    <th style="text-align:center;">DG</th>
-                                    <th style="text-align:center; color:var(--primary-color);">PTS</th>
+                                    <th class="standings-rank"><?php echo htmlspecialchars(__('rank')); ?></th>
+                                    <th><?php echo htmlspecialchars(__('team')); ?></th>
+                                    <th style="text-align:center;"><?php echo htmlspecialchars(__('played')); ?></th>
+                                    <th style="text-align:center;"><?php echo htmlspecialchars(__('wins')); ?></th>
+                                    <th style="text-align:center;"><?php echo htmlspecialchars(__('draws')); ?></th>
+                                    <th style="text-align:center;"><?php echo htmlspecialchars(__('losses')); ?></th>
+                                    <th style="text-align:center;"><?php echo htmlspecialchars(__('goals_for')); ?></th>
+                                    <th style="text-align:center;"><?php echo htmlspecialchars(__('goals_against')); ?></th>
+                                    <th style="text-align:center;"><?php echo htmlspecialchars(__('goal_diff')); ?></th>
+                                    <th style="text-align:center; color:var(--primary-color);"><?php echo htmlspecialchars(__('points')); ?></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -210,21 +212,21 @@ if ($standings && isset($standings['season']['displayName'])) {
                 </div>
 
                 <!-- Partidos de la Liga -->
-                <h2 style="font-size: 1.4rem; font-weight: 800; margin-bottom: 20px; border-left: 4px solid var(--accent-blue); padding-left: 10px;">PARTIDOS DE LA JORNADA</h2>
+                <h2 style="font-size: 1.4rem; font-weight: 800; margin-bottom: 20px; border-left: 4px solid var(--accent-blue); padding-left: 10px;"><?php echo htmlspecialchars(__('fixtures_title')); ?></h2>
                 <div class="matches-list-container" style="display:flex; flex-direction:column; gap:15px; margin-bottom: 40px;">
                     <?php if (empty($partidos)): ?>
-                        <div style="color:var(--text-secondary); text-align:center; padding:20px;">No hay partidos programados para esta liga. Sincroniza desde la administración.</div>
+                        <div style="color:var(--text-secondary); text-align:center; padding:20px;"><?php echo htmlspecialchars(__('no_data')); ?></div>
                     <?php else: ?>
                         <?php foreach ($partidos as $p): ?>
                             <?php 
-                            $dateObj = new DateTIme($p['fecha_hora']);
+                            $dateObj = new DateTime($p['fecha_hora']);
                             $state_label = '';
                             if ($p['estado'] === 'pendiente') {
                                 $state_label = $dateObj->format('d/m H:i');
                             } elseif ($p['estado'] === 'en_vivo') {
                                 $state_label = "<span class=\"badge-live-pulse\">LIVE Min {$p['minuto_actual']}'</span>";
                             } elseif ($p['estado'] === 'finalizado') {
-                                $state_label = 'Finalizado';
+                                $state_label = __('finished');
                             }
                             ?>
                             <div class="match-card-clickable" data-match-id="<?php echo $p['id']; ?>" style="cursor:pointer; background:rgba(255, 255, 255, 0.02); border:1px solid var(--border-glass); border-radius:12px; padding:15px; display:flex; justify-content:space-between; align-items:center;">
@@ -265,19 +267,19 @@ if ($standings && isset($standings['season']['displayName'])) {
 
                     <!-- Caja de Afiliado para apostar destacado -->
                     <div class="betting-widget">
-                        <span class="betting-widget-title">🔥 CUOTAS RECOMENDADAS</span>
+                        <span class="betting-widget-title">🔥 <?php echo htmlspecialchars(strtoupper(__('predictions'))); ?></span>
                         <div class="betting-teams">
-                            <span style="font-weight:700;">Ganador de la Competición</span>
+                            <span style="font-weight:700;"><?php echo htmlspecialchars(__('winner_competition')); ?></span>
                         </div>
-                        <p style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:15px;">¿Quién ganará el título esta temporada? Consulta las cuotas de campeón en directo y llévate un bono de bienvenida exclusivo.</p>
-                        <a href="<?php echo htmlspecialchars($afiliado_apuestas); ?>" target="_blank" rel="nofollow noopener" class="btn-bet-now">Ver Cuotas del Campeonato</a>
+                        <p style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:15px;"><?php echo htmlspecialchars(__('winner_competition_desc')); ?></p>
+                        <a href="<?php echo htmlspecialchars($afiliado_apuestas); ?>" target="_blank" rel="nofollow noopener" class="btn-bet-now"><?php echo htmlspecialchars(__('bet_now')); ?></a>
                     </div>
 
                     <!-- Enlace a Tienda / Camisetas -->
                     <div class="betting-widget" style="border-color: rgba(14, 165, 233, 0.2);">
-                        <span class="betting-widget-title" style="color: var(--accent-blue);">🛒 EQUIPAMIENTO OFICIAL</span>
-                        <p style="font-size:0.8rem; color:var(--text-secondary); margin-bottom: 15px;">Compra las camisetas de local y visitante con parches oficiales de la <?php echo htmlspecialchars($liga['nombre']); ?>.</p>
-                        <a href="<?php echo htmlspecialchars($afiliado_camisetas); ?>" target="_blank" rel="nofollow noopener" class="btn-bet-now" style="background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); color:#ffffff;">Ir a la Tienda Oficial</a>
+                        <span class="betting-widget-title" style="color: var(--accent-blue);">🛒 <?php echo htmlspecialchars(__('official_gear')); ?></span>
+                        <p style="font-size:0.8rem; color:var(--text-secondary); margin-bottom: 15px;"><?php echo htmlspecialchars(__('official_gear_desc')); ?> <?php echo htmlspecialchars($liga['nombre']); ?>.</p>
+                        <a href="<?php echo htmlspecialchars($afiliado_camisetas); ?>" target="_blank" rel="nofollow noopener" class="btn-bet-now" style="background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); color:#ffffff;"><?php echo htmlspecialchars(__('buy_shirt')); ?></a>
                     </div>
                 </div>
             </div>
@@ -287,10 +289,11 @@ if ($standings && isset($standings['season']['displayName'])) {
 
     <!-- Footer -->
     <footer style="text-align:center; padding:40px 20px; border-top:1px solid var(--border-glass); margin-top:60px; color:#64748b; font-size:0.85rem;">
-        <p>&copy; <?php echo date('Y'); ?> 5 Ligas Europa. Todos los derechos reservados.</p>
-        <p style="margin-top:10px; font-size:0.75rem;">🔞 +18 Jugar con responsabilidad. La información de clasificaciones está provista por ESPN API.</p>
+        <p>&copy; <?php echo date('Y'); ?> 5 Ligas Europa. <?php echo htmlspecialchars(__('footer_rights')); ?></p>
+        <p style="margin-top:10px; font-size:0.75rem;"><?php echo __('footer_note_liga'); ?></p>
     </footer>
 
+    <?php renderJSTranslations(); ?>
     <script src="script.js?v=<?php echo time(); ?>"></script>
 </body>
 </html>

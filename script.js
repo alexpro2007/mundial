@@ -80,15 +80,14 @@ function initMatchModal() {
     if (!modal) {
         modal = document.createElement('div');
         modal.id = 'match-details-modal';
-        modal.className = 'modal-backdrop';
+        modal.className = 'modal';
+        const titleText = (window.AppTranslations && window.AppTranslations.details_title) ? window.AppTranslations.details_title : 'Detalles del Partido';
+        const loadingText = (window.AppTranslations && window.AppTranslations.loading) ? window.AppTranslations.loading : 'Cargando detalles...';
         modal.innerHTML = `
-            <div class="modal-card">
-                <div class="modal-header">
-                    <span class="modal-title">Detalles del Partido</span>
-                    <button class="modal-close-btn">&times;</button>
-                </div>
+            <div class="modal-content">
+                <span class="close-modal">&times;</span>
                 <div class="modal-body" id="modal-match-content">
-                    Cargando detalles...
+                    ${loadingText}
                 </div>
             </div>
         `;
@@ -96,7 +95,7 @@ function initMatchModal() {
     }
 
     // Evento cerrar modal
-    modal.querySelector('.modal-close-btn').addEventListener('click', closeModal);
+    modal.querySelector('.close-modal').addEventListener('click', closeModal);
     modal.addEventListener('click', (e) => {
         if (e.target === modal) closeModal();
     });
@@ -118,7 +117,8 @@ function openMatchDetails(matchId) {
     const content = document.getElementById('modal-match-content');
     
     modal.classList.add('active');
-    content.innerHTML = '<div style="text-align:center; padding:30px; color:var(--text-secondary);">Cargando estadísticas en tiempo real...</div>';
+    const statsLoadingText = (window.AppTranslations && window.AppTranslations.loading_live_stats) ? window.AppTranslations.loading_live_stats : 'Cargando estadísticas en tiempo real...';
+    content.innerHTML = `<div style="text-align:center; padding:30px; color:var(--text-secondary);">${statsLoadingText}</div>`;
 
     fetch(`api.php?action=get_match_details&id=${matchId}`)
         .then(res => res.json())
@@ -135,12 +135,16 @@ function openMatchDetails(matchId) {
 
                 let statusText = '';
                 if (p.estado === 'en_vivo') {
-                    statusText = `<span class="badge-live-pulse">LIVE Min ${p.minuto_actual}'</span>`;
+                    const liveMinText = (window.AppTranslations && window.AppTranslations.live_min) ? window.AppTranslations.live_min : 'LIVE Min';
+                    statusText = `<span class="badge-live-pulse">${liveMinText} ${p.minuto_actual}'</span>`;
                 } else if (p.estado === 'finalizado') {
-                    statusText = '<span style="color:var(--text-secondary); font-weight:700;">Finalizado</span>';
+                    const finishedText = (window.AppTranslations && window.AppTranslations.finished) ? window.AppTranslations.finished : 'Finalizado';
+                    statusText = `<span style="color:var(--text-secondary); font-weight:700;">${finishedText}</span>`;
                 } else {
                     const d = new Date(p.fecha_hora.replace(/-/g, "/"));
-                    statusText = `<span style="color:var(--accent-blue); font-weight:600;">${d.toLocaleDateString('es-ES')} ${d.toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'})}</span>`;
+                    const currentLangCode = (window.AppTranslations && window.AppTranslations.lang_code) || 'es';
+                    const localeStr = currentLangCode === 'en' ? 'en-US' : (currentLangCode === 'it' ? 'it-IT' : (currentLangCode === 'de' ? 'de-DE' : (currentLangCode === 'fr' ? 'fr-FR' : 'es-ES')));
+                    statusText = `<span style="color:var(--accent-blue); font-weight:600;">${d.toLocaleDateString(localeStr)} ${d.toLocaleTimeString(localeStr, {hour:'2-digit', minute:'2-digit'})}</span>`;
                 }
 
                 // Generar HTML de eventos
@@ -166,38 +170,41 @@ function openMatchDetails(matchId) {
                     `;
                 });
 
+                const noIncidentsText = (window.AppTranslations && window.AppTranslations.no_incidents) ? window.AppTranslations.no_incidents : 'Sin incidencias';
                 content.innerHTML = `
-                    <div class="modal-match-header">
-                        <div class="modal-team">
-                            <img src="${p.equipo_local_logo}" class="modal-team-logo" alt="">
-                            <span class="modal-team-name">${escapeHtml(p.equipo_local_nombre)}</span>
-                        </div>
-                        <div class="modal-score-section">
-                            <div class="modal-score">${scoreText}</div>
-                            <div class="modal-status">${statusText}</div>
-                        </div>
-                        <div class="modal-team">
-                            <img src="${p.equipo_visitante_logo}" class="modal-team-logo" alt="">
-                            <span class="modal-team-name">${escapeHtml(p.equipo_visitante_nombre)}</span>
+                    <div class="modal-header-match">
+                        <div class="modal-match-meta">${statusText}</div>
+                        <div class="modal-teams-row">
+                            <div class="modal-team-box">
+                                <img src="${p.equipo_local_logo}" alt="">
+                                <span>${escapeHtml(p.equipo_local_nombre)}</span>
+                            </div>
+                            <div class="modal-score-box">${scoreText}</div>
+                            <div class="modal-team-box">
+                                <img src="${p.equipo_visitante_logo}" alt="">
+                                <span>${escapeHtml(p.equipo_visitante_nombre)}</span>
+                            </div>
                         </div>
                     </div>
                     
                     <div class="modal-events-container">
                         <div class="modal-events-column">
-                            ${localEventsHtml || '<div style="color:var(--text-secondary); font-size:0.8rem; text-align:center; padding:10px;">Sin incidencias</div>'}
+                            ${localEventsHtml || `<div style="color:var(--text-secondary); font-size:0.8rem; text-align:center; padding:10px;">${noIncidentsText}</div>`}
                         </div>
                         <div class="modal-separator"></div>
                         <div class="modal-events-column">
-                            ${visitorEventsHtml || '<div style="color:var(--text-secondary); font-size:0.8rem; text-align:center; padding:10px;">Sin incidencias</div>'}
+                            ${visitorEventsHtml || `<div style="color:var(--text-secondary); font-size:0.8rem; text-align:center; padding:10px;">${noIncidentsText}</div>`}
                         </div>
                     </div>
                 `;
             } else {
-                content.innerHTML = `<div style="color:var(--accent-red); text-align:center; padding:30px;">Error: ${data.message}</div>`;
+                const errorLabel = (window.AppTranslations && window.AppTranslations.error) ? window.AppTranslations.error : 'Error';
+                content.innerHTML = `<div style="color:var(--accent-red); text-align:center; padding:30px;">${errorLabel}: ${data.message}</div>`;
             }
         })
         .catch(err => {
-            content.innerHTML = '<div style="color:var(--accent-red); text-align:center; padding:30px;">Error al conectar con la API de datos.</div>';
+            const apiErrorText = (window.AppTranslations && window.AppTranslations.api_error) ? window.AppTranslations.api_error : 'Error al conectar con la API de datos.';
+            content.innerHTML = `<div style="color:var(--accent-red); text-align:center; padding:30px;">${apiErrorText}</div>`;
             console.error(err);
         });
 }

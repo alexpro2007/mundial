@@ -1,6 +1,7 @@
 <?php
 // fichajes.php - Portal del Mercado de Fichajes de las 5 Grandes Ligas (SEO y Rumores)
 require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/lang.php';
 
 // Cargar configuración de publicidad y afiliados
 $banner_header = '<div class="banner-placeholder">PUBLICIDAD SUPERIOR (728x90)</div>';
@@ -29,12 +30,12 @@ try {
 }
 ?>
 <!DOCTYPE html>
-<html lang="es">
+<html lang="<?php echo htmlspecialchars($current_lang); ?>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mercado de Fichajes en Vivo - Rumores y Traspasos de Fútbol</title>
-    <meta name="description" content="Sigue el mercado de fichajes de fútbol en tiempo real. Rumores, cesiones, acuerdos y confirmaciones de traspaso de las 5 grandes ligas de Europa.">
+    <title><?php echo htmlspecialchars(__('fichajes_meta_title')); ?></title>
+    <meta name="description" content="<?php echo htmlspecialchars(__('fichajes_meta_desc')); ?>">
     <link rel="stylesheet" href="style.css?v=<?php echo time(); ?>">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&display=swap" rel="stylesheet">
 </head>
@@ -53,15 +54,16 @@ try {
             </a>
             
             <nav class="main-nav">
-                <a href="index.php" class="nav-btn" style="text-decoration:none;">Inicio</a>
+                <a href="index.php" class="nav-btn" style="text-decoration:none;"><?php echo htmlspecialchars(__('nav_inicio')); ?></a>
                 <a href="liga.php?id=esp.1" class="nav-btn" style="text-decoration:none;">LaLiga</a>
                 <a href="liga.php?id=eng.1" class="nav-btn" style="text-decoration:none;">Premier</a>
                 <a href="liga.php?id=ita.1" class="nav-btn" style="text-decoration:none;">Serie A</a>
                 <a href="liga.php?id=ger.1" class="nav-btn" style="text-decoration:none;">Bundesliga</a>
                 <a href="liga.php?id=fra.1" class="nav-btn" style="text-decoration:none;">Ligue 1</a>
-                <a href="liga.php?id=fifa.world" class="nav-btn" style="text-decoration:none;">Mundial</a>
-                <a href="fichajes.php" class="nav-btn active" style="text-decoration:none;">Fichajes</a>
+                <a href="liga.php?id=fifa.world" class="nav-btn" style="text-decoration:none;"><?php echo htmlspecialchars(__('nav_mundial')); ?></a>
+                <a href="fichajes.php" class="nav-btn active" style="text-decoration:none;"><?php echo htmlspecialchars(__('nav_fichajes')); ?></a>
             </nav>
+            <?php renderLanguageSelector(); ?>
         </div>
     </header>
 
@@ -75,24 +77,24 @@ try {
             
             <!-- Columna Izquierda (Lista de rumores y traspasos) -->
             <div class="main-content">
-                <h1 style="font-size:1.8rem; font-weight:800; color:#ffffff; margin-bottom:10px;">Mercado de Fichajes y Rumores en Vivo</h1>
-                <p style="color:var(--text-secondary); margin-bottom:30px;">Entérate antes que nadie de las altas, bajas, renovaciones y cotilleos más calientes del mercado europeo de fútbol en directo.</p>
+                <h1 style="font-size:1.8rem; font-weight:800; color:#ffffff; margin-bottom:10px;"><?php echo htmlspecialchars(__('fichajes_h1')); ?></h1>
+                <p style="color:var(--text-secondary); margin-bottom:30px;"><?php echo htmlspecialchars(__('fichajes_subtitle')); ?></p>
                 
                 <div style="display:flex; flex-direction:column; gap:25px;">
                     <?php if (empty($fichajes)): ?>
                         <!-- Plantilla mock inicial de fichaje si la base de datos está vacía -->
                         <div class="fichaje-card" id="ejemplo-fichaje" style="background:var(--bg-card); border:1px solid var(--border-glass); border-radius:16px; padding:25px; box-shadow:var(--shadow-premium);">
                             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                                <span class="news-badge badge-fichaje" style="margin-bottom:0;">MERCADO EN VIVO</span>
-                                <span style="font-size:0.75rem; color:var(--text-secondary);">Hoy, hace pocas horas</span>
+                                <span class="news-badge badge-fichaje" style="margin-bottom:0;"><?php echo htmlspecialchars(__('market_live')); ?></span>
+                                <span style="font-size:0.75rem; color:var(--text-secondary);"><?php echo htmlspecialchars(__('today_few_hours')); ?></span>
                             </div>
-                            <h3 style="font-size:1.3rem; font-weight:700; color:#ffffff; margin-bottom:12px;">El Chelsea negocia el traspaso de una estrella de la Bundesliga</h3>
+                            <h3 style="font-size:1.3rem; font-weight:700; color:#ffffff; margin-bottom:12px;"><?php echo htmlspecialchars(__('mock_fichaje_title')); ?></h3>
                             <p style="font-size:0.95rem; line-height:1.7; color:#cbd5e1; margin-bottom:20px;">
-                                Diversas fuentes informan que el club londinense ha iniciado contactos formales con los agentes del jugador para cerrar el acuerdo antes del cierre del periodo de inscripciones. Las negociaciones están bien encaminadas y se espera una oferta oficial en los próximos días.
+                                <?php echo htmlspecialchars(__('mock_fichaje_desc')); ?>
                             </p>
                             <div style="border-top:1px solid rgba(255,255,255,0.05); padding-top:15px; display:flex; justify-content:space-between; align-items:center;">
-                                <span style="font-size:0.8rem; color:#64748b;">Liga de procedencia: Alemania</span>
-                                <a href="<?php echo htmlspecialchars($afiliado_camisetas); ?>" target="_blank" rel="nofollow noopener" style="color:var(--primary-color); font-weight:700; text-decoration:none; font-size:0.85rem;">Comprar equipamiento oficial →</a>
+                                <span style="font-size:0.8rem; color:#64748b;"><?php echo htmlspecialchars(__('mock_fichaje_league')); ?></span>
+                                <a href="<?php echo htmlspecialchars($afiliado_camisetas); ?>" target="_blank" rel="nofollow noopener" style="color:var(--primary-color); font-weight:700; text-decoration:none; font-size:0.85rem;"><?php echo htmlspecialchars(__('buy_shirt')); ?> →</a>
                             </div>
                         </div>
                     <?php else: ?>
@@ -102,7 +104,7 @@ try {
                             if ($is_visual_card): 
                             ?>
                                 <div class="fichaje-visual-card" id="<?php echo htmlspecialchars($f['slug']); ?>">
-                                    <span class="visual-badge">MERCADO REAL</span>
+                                    <span class="visual-badge"><?php echo htmlspecialchars(__('market_real')); ?></span>
                                     
                                     <!-- Player Name/Headline -->
                                     <h3 class="visual-player-name"><?php echo htmlspecialchars($f['titulo']); ?></h3>
@@ -145,7 +147,14 @@ try {
                                     
                                     <!-- Contract duration -->
                                     <div class="visual-contract-details">
-                                        <?php echo htmlspecialchars($f['detalles_contrato'] ?: 'OFICIAL'); ?>
+                                        <?php 
+                                        $detalles = $f['detalles_contrato'];
+                                        if (empty($detalles) || strtoupper($detalles) === 'OFICIAL') {
+                                            echo htmlspecialchars(__('official')); 
+                                        } else {
+                                            echo htmlspecialchars($detalles);
+                                        }
+                                        ?>
                                     </div>
                                     
                                     <?php if (!empty($f['contenido']) && trim($f['contenido']) !== trim($f['titulo'])): ?>
@@ -157,9 +166,9 @@ try {
                                     <!-- Afiliados -->
                                     <div style="margin-top: 15px; text-align: right; border-top:1px solid rgba(255,255,255,0.05); padding-top:10px;">
                                         <?php if (!empty($f['enlace_afiliado'])): ?>
-                                            <a href="<?php echo htmlspecialchars($f['enlace_afiliado']); ?>" target="_blank" rel="nofollow noopener" style="color:var(--primary-color); font-weight:700; text-decoration:none; font-size:0.8rem;">Ver noticia original →</a>
+                                            <a href="<?php echo htmlspecialchars($f['enlace_afiliado']); ?>" target="_blank" rel="nofollow noopener" style="color:var(--primary-color); font-weight:700; text-decoration:none; font-size:0.8rem;"><?php echo htmlspecialchars(__('read_original')); ?></a>
                                         <?php else: ?>
-                                            <a href="<?php echo htmlspecialchars($afiliado_camisetas); ?>" target="_blank" rel="nofollow noopener" style="color:var(--primary-color); font-weight:700; text-decoration:none; font-size:0.8rem;">Equipación oficial →</a>
+                                            <a href="<?php echo htmlspecialchars($afiliado_camisetas); ?>" target="_blank" rel="nofollow noopener" style="color:var(--primary-color); font-weight:700; text-decoration:none; font-size:0.8rem;"><?php echo htmlspecialchars(__('official_shirt')); ?></a>
                                         <?php endif; ?>
                                     </div>
                                 </div>
@@ -167,7 +176,7 @@ try {
                                 <!-- Tarjeta Normal (Texto/Imagen simple) -->
                                 <div class="fichaje-card" id="<?php echo htmlspecialchars($f['slug']); ?>" style="background:var(--bg-card); border:1px solid var(--border-glass); border-radius:16px; padding:25px; box-shadow:var(--shadow-premium);">
                                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                                        <span class="news-badge badge-fichaje" style="margin-bottom:0;">MERCADO EN VIVO</span>
+                                        <span class="news-badge badge-fichaje" style="margin-bottom:0;"><?php echo htmlspecialchars(__('market_live')); ?></span>
                                         <span style="font-size:0.75rem; color:var(--text-secondary);"><?php echo date('d/m/Y H:i', strtotime($f['fecha_creacion'])); ?></span>
                                     </div>
                                     <?php if (!empty($f['foto_jugador'])): ?>
@@ -181,11 +190,11 @@ try {
                                         <?php echo nl2br($f['contenido']); ?>
                                     </div>
                                     <div style="border-top:1px solid rgba(255,255,255,0.05); padding-top:15px; display:flex; justify-content:space-between; align-items:center;">
-                                        <span style="font-size:0.8rem; color:#64748b;">Etiqueta: Rumores de Europa</span>
+                                        <span style="font-size:0.8rem; color:#64748b;"><?php echo htmlspecialchars(__('tag_rumors')); ?></span>
                                         <?php if (!empty($f['enlace_afiliado'])): ?>
-                                            <a href="<?php echo htmlspecialchars($f['enlace_afiliado']); ?>" target="_blank" rel="nofollow noopener" style="color:var(--primary-color); font-weight:700; text-decoration:none; font-size:0.85rem;">Enlace Especial de Fichajes →</a>
+                                            <a href="<?php echo htmlspecialchars($f['enlace_afiliado']); ?>" target="_blank" rel="nofollow noopener" style="color:var(--primary-color); font-weight:700; text-decoration:none; font-size:0.85rem;"><?php echo htmlspecialchars(__('special_transfer_link')); ?></a>
                                         <?php else: ?>
-                                            <a href="<?php echo htmlspecialchars($afiliado_camisetas); ?>" target="_blank" rel="nofollow noopener" style="color:var(--primary-color); font-weight:700; text-decoration:none; font-size:0.85rem;">Equipación en Oferta →</a>
+                                            <a href="<?php echo htmlspecialchars($afiliado_camisetas); ?>" target="_blank" rel="nofollow noopener" style="color:var(--primary-color); font-weight:700; text-decoration:none; font-size:0.85rem;"><?php echo htmlspecialchars(__('shirt_on_sale')); ?></a>
                                         <?php endif; ?>
                                     </div>
                                 </div>
@@ -206,9 +215,9 @@ try {
 
                     <!-- Enlace Afiliado Apuestas Widget -->
                     <div class="betting-widget">
-                        <span class="betting-widget-title">🔥 APUESTAS DE FICHAJES</span>
-                        <p style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:15px;">¿Dónde jugará el próximo Balón de Oro? Apuesta por sus posibles destinos en el mercado de fichajes con las cuotas especiales de nuestro socio de afiliados.</p>
-                        <a href="<?php echo htmlspecialchars($afiliado_apuestas); ?>" target="_blank" rel="nofollow noopener" class="btn-bet-now">Apuestas Especiales Fichajes</a>
+                        <span class="betting-widget-title"><?php echo htmlspecialchars(__('sidebar_betting_title')); ?></span>
+                        <p style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:15px;"><?php echo htmlspecialchars(__('sidebar_betting_desc')); ?></p>
+                        <a href="<?php echo htmlspecialchars($afiliado_apuestas); ?>" target="_blank" rel="nofollow noopener" class="btn-bet-now"><?php echo htmlspecialchars(__('sidebar_betting_button')); ?></a>
                     </div>
                 </div>
             </div>
@@ -218,10 +227,11 @@ try {
 
     <!-- Footer -->
     <footer style="text-align:center; padding:40px 20px; border-top:1px solid var(--border-glass); margin-top:60px; color:#64748b; font-size:0.85rem;">
-        <p>&copy; <?php echo date('Y'); ?> 5 Ligas Europa. Todos los derechos reservados.</p>
-        <p style="margin-top:10px; font-size:0.75rem;">🔞 +18 Jugar con responsabilidad. La información de rumores recopila especulaciones de prensa especializada.</p>
+        <p>&copy; <?php echo date('Y'); ?> 5 Ligas Europa. <?php echo htmlspecialchars(__('footer_rights')); ?></p>
+        <p style="margin-top:10px; font-size:0.75rem;"><?php echo htmlspecialchars(__('footer_fichajes_disclaimer')); ?></p>
     </footer>
 
+    <?php renderJSTranslations(); ?>
     <script src="script.js?v=<?php echo time(); ?>"></script>
 </body>
 </html>
