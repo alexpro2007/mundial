@@ -364,11 +364,8 @@ try {
         </div>
     </main>
 
-    <!-- Footer -->
-    <footer style="text-align:center; padding:40px 20px; border-top:1px solid var(--border-glass); margin-top:60px; color:#64748b; font-size:0.85rem;">
-        <p>&copy; <?php echo date('Y'); ?> 5 Ligas Europa. <?php echo htmlspecialchars(__('footer_rights')); ?></p>
-        <p style="margin-top:10px; font-size:0.75rem;"><?php echo __('footer_note_index'); ?></p>
-    </footer>
+    <!-- Footer Centralizado -->
+    <?php include __DIR__ . '/footer.php'; ?>
 
     <?php renderJSTranslations(); ?>
     <script src="script.js?v=<?php echo time(); ?>"></script>

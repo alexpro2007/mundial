@@ -195,6 +195,10 @@ if (!$articulo) {
                         <span class="betting-widget-title"><?php echo htmlspecialchars(__('sidebar_promo_title')); ?></span>
                         <p style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:15px;"><?php echo htmlspecialchars(__('sidebar_promo_desc')); ?></p>
                         <a href="<?php echo htmlspecialchars($afiliado_apuestas); ?>" target="_blank" rel="nofollow noopener" class="btn-bet-now"><?php echo htmlspecialchars(__('sidebar_promo_button')); ?></a>
+                        <div style="margin-top: 15px; display: flex; gap: 10px; align-items: center; justify-content: center;">
+                            <span style="display:inline-block; border: 1px solid var(--text-secondary); border-radius: 50%; width: 24px; height: 24px; line-height: 22px; text-align: center; font-weight: bold; color: var(--text-secondary); font-size: 0.6rem;">+18</span>
+                            <a href="https://www.jugarbien.es" target="_blank" rel="noopener nofollow" style="color: var(--text-secondary); font-weight: bold; border: 1px solid var(--text-secondary); padding: 2px 6px; border-radius: 4px; text-decoration: none; font-size: 0.65rem;">JugarBien</a>
+                        </div>
                     </div>
                     
                     <!-- Juego Responsable -->
@@ -207,11 +211,8 @@ if (!$articulo) {
         </div>
     </main>
 
-    <!-- Footer -->
-    <footer style="text-align:center; padding:40px 20px; border-top:1px solid var(--border-glass); margin-top:60px; color:#64748b; font-size:0.85rem;">
-        <p>&copy; <?php echo date('Y'); ?> 5 Ligas Europa. <?php echo htmlspecialchars(__('footer_rights')); ?></p>
-        <p style="margin-top:10px; font-size:0.75rem;"><?php echo htmlspecialchars(__('footer_pronosticos_disclaimer')); ?></p>
-    </footer>
+    <!-- Footer Centralizado -->
+    <?php include __DIR__ . '/footer.php'; ?>
 
     <?php renderJSTranslations(); ?>
     <script src="script.js?v=<?php echo time(); ?>"></script>
