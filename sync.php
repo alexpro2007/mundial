@@ -47,13 +47,19 @@ if (!$force && file_exists($last_sync_file)) {
 }
 
 // Ligas a sincronizar
+// Calcular dinámicamente la temporada actual de fútbol europeo (comienza en agosto)
+$season_year = (int)date('Y');
+if ((int)date('n') < 7) { // Si estamos entre enero y junio, la temporada comenzó el año anterior
+    $season_year--;
+}
+
 $ligas = [
-    'eng.1' => 'Premier League',
-    'esp.1' => 'LaLiga',
-    'ita.1' => 'Serie A',
-    'ger.1' => 'Bundesliga',
-    'fra.1' => 'Ligue 1',
-    'fifa.world' => 'Copa del Mundo'
+    'eng.1' => ['nombre' => 'Premier League', 'dates' => "{$season_year}0801-" . ($season_year + 1) . "0701"],
+    'esp.1' => ['nombre' => 'LaLiga', 'dates' => "{$season_year}0801-" . ($season_year + 1) . "0701"],
+    'ita.1' => ['nombre' => 'Serie A', 'dates' => "{$season_year}0801-" . ($season_year + 1) . "0701"],
+    'ger.1' => ['nombre' => 'Bundesliga', 'dates' => "{$season_year}0801-" . ($season_year + 1) . "0701"],
+    'fra.1' => ['nombre' => 'Ligue 1', 'dates' => "{$season_year}0801-" . ($season_year + 1) . "0701"],
+    'fifa.world' => ['nombre' => 'Copa del Mundo', 'dates' => '20260601-20260731']
 ];
 
 $partidos_actualizados = 0;
@@ -80,9 +86,12 @@ if (!function_exists('getOrCreateTeam')) {
 }
 
 try {
-    foreach ($ligas as $liga_id => $liga_nombre) {
+    foreach ($ligas as $liga_id => $liga_info) {
+        $liga_nombre = $liga_info['nombre'];
+        $dates_param = $liga_info['dates'];
+        
         // A. Sincronizar Scoreboard (Partidos)
-        $scoreboard_url = "https://site.api.espn.com/apis/site/v2/sports/soccer/{$liga_id}/scoreboard?limit=100";
+        $scoreboard_url = "https://site.api.espn.com/apis/site/v2/sports/soccer/{$liga_id}/scoreboard?dates={$dates_param}&limit=1000";
         
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $scoreboard_url);
@@ -94,7 +103,11 @@ try {
         
         if ($json_scoreboard) {
             $data = json_decode($json_scoreboard, true);
-            if (isset($data['events'])) {
+            if (isset($data['events']) && is_array($data['events']) && count($data['events']) > 0) {
+                // Limpiar partidos anteriores de esta liga para evitar duplicados o mezclas
+                $delPartStmt = $pdo->prepare("DELETE FROM partidos WHERE liga_id = ?");
+                $delPartStmt->execute([$liga_id]);
+
                 foreach ($data['events'] as $e) {
                     $espn_match_id = intval($e['id']);
                     $comp = $e['competitions'][0];
