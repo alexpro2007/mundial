@@ -45,27 +45,7 @@ try {
         $pdo->query("USE `$dbname`");
     }
 
-    // Auto-sincronización periódica con ESPN (cada 30 segundos)
-    if (!defined('DISABLE_SYNC_OUTPUT')) {
-        $last_sync_file = __DIR__ . '/last_sync.txt';
-        $now = time();
-        $should_sync = false;
-        
-        if (!file_exists($last_sync_file)) {
-            $should_sync = true;
-        } else {
-            $last_sync_time = intval(file_get_contents($last_sync_file));
-            if ($now - $last_sync_time >= 30) {
-                $should_sync = true;
-            }
-        }
-        
-        if ($should_sync) {
-            define('DISABLE_SYNC_OUTPUT', true);
-            // Sincronizar silenciosamente
-            require_once __DIR__ . '/sync.php';
-        }
-    }
+
 
 } catch (PDOException $e) {
     header('Content-Type: application/json');
